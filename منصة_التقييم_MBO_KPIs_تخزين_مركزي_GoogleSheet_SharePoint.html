@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة التقييم المركزية — الإدارة بالأهداف ومؤشرات الأداء</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;direction:rtl}
+body{font-family:"Segoe UI","Arial",sans-serif;background:#F0F4FA;color:#1A1A2E;font-size:14px;line-height:1.6}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#003087;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.tt{font-size:16px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.ts{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.rtog{display:flex;background:rgba(255,255,255,.12);border-radius:8px;overflow:hidden}
+.rtb{padding:7px 14px;font-size:12px;font-family:inherit;border:none;cursor:pointer;color:rgba(255,255,255,.7);background:transparent}
+.rtb.on{background:#fff;color:#003087;font-weight:700}
+.sbar{padding:6px 20px;background:#E8EFF9;border-bottom:1px solid #D0DBF0;font-size:12px;color:#555;display:flex;align-items:center;gap:8px}
+.content{flex:1;padding:20px;max-width:900px;margin:0 auto;width:100%}
+.view{display:none}.view.on{display:block}
+.card{background:#fff;border:1px solid #E0E8F0;border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.cblue{background:#EAF1FB;border-color:#B5D4F4}
+.cgreen{background:#EAF5EE;border-color:#A8D8B8}
+.cpurple{background:#F0EEFF;border-color:#C4B8F4}
+.cyellow{background:#FFFBEA;border-color:#F0D060}
+.sec{font-size:13px;font-weight:700;color:#003087;padding:8px 0;border-bottom:2px solid #E0E8F0;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.sec-l{display:flex;align-items:center;gap:7px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.lbl{font-size:12px;font-weight:600;color:#555;margin-bottom:5px}
+.req{color:#DC3545;margin-right:2px}
+input[type=text],select,textarea{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #D0DBF0;background:#F8FAFD;font-size:13px;color:#1A1A2E;font-family:inherit;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#003087;background:#fff}
+textarea{min-height:56px;resize:vertical}
+.bp{background:#003087;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .2s}
+.bp:hover{background:#00247A}
+.bp:disabled{opacity:.5;cursor:not-allowed}
+.bp-full{width:100%;margin-bottom:8px}
+.bpg{background:#0F6E56}.bpg:hover{background:#0A5240}
+.bpp{background:#534AB7}.bpp:hover{background:#3E379A}
+.bpr{background:#A32D2D}.bpr:hover{background:#7A1F1F}
+.bpa{background:#854F0B}.bpa:hover{background:#633806}
+.bs{background:#F0F4FA;color:#003087;border:1px solid #D0DBF0;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
+.bs:hover{background:#E0E8F5}
+.exprow{display:flex;gap:8px;margin-top:10px}
+.exprow .bs{flex:1;text-align:center}
+.bdg{display:inline-block;font-size:11px;padding:3px 8px;border-radius:4px;font-weight:700}
+.b1{background:#D4EDDA;color:#155724}.b2{background:#D0E4FB;color:#003087}
+.b3{background:#FFF3CD;color:#856404}.b4{background:#F8D7DA;color:#721C24}
+.b5{background:#D1F2E8;color:#0A5240}.b6{background:#E8E4FF;color:#3E379A}
+.b7{background:#FFF3E0;color:#7A3800}
+.toast{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:600;display:none}
+.tok{display:block;background:#D4EDDA;color:#155724;border:1px solid #A8D8B8}
+.ter{display:block;background:#F8D7DA;color:#721C24;border:1px solid #F0B4BA}
+.tin{display:block;background:#D0E4FB;color:#003087;border:1px solid #B5D4F4}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.krow5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kc{background:#fff;border:1px solid #E0E8F0;border-radius:10px;padding:14px 8px;text-align:center}
+.kv{font-size:24px;font-weight:800;color:#003087}.kl{font-size:11px;color:#888;margin-top:3px}
+.tw{background:#fff;border:1px solid #E0E8F0;border-radius:12px;overflow:hidden;margin-bottom:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{background:#003087;color:#fff;padding:10px;text-align:right;font-weight:700}
+td{padding:8px 10px;border-bottom:1px solid #F0F4FA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FAFD}
+.pbwrap{background:#F0F4FA;padding:10px 18px 6px}
+.pbrow{display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:5px}
+.pbtr{height:5px;background:#E0E8F0;border-radius:3px;overflow:hidden;margin-bottom:8px}
+.pbfi{height:100%;border-radius:3px;transition:width .3s}
+.psteps{display:flex;border-radius:10px;overflow:hidden;border:1px solid #E0E8F0;margin-bottom:14px}
+.ps{flex:1;padding:9px 6px;text-align:center;font-size:12px;color:#888;background:#F8FAFD;border-left:1px solid #E0E8F0}
+.ps:last-child{border-left:none}
+.ps.done{background:#EAF5EE;color:#155724;font-weight:600}
+.ps.active{background:#003087;color:#fff;font-weight:700}
+.nrow{display:flex;gap:8px;padding:8px 0 12px}
+.nrow button{flex:1;padding:11px;border-radius:8px;font-size:13px;font-family:inherit;cursor:pointer}
+.np{background:#003087;color:#fff;border:none;font-weight:700}
+.np:hover{background:#00247A}
+.ns{background:#F0F4FA;color:#003087;border:1px solid #D0DBF0}
+.qcard{background:#fff;border:1.5px solid #E0E8F0;border-radius:12px;padding:16px;margin-bottom:10px}
+.qtxt{font-size:14px;font-weight:700;line-height:1.6;margin-bottom:14px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-radius:8px;border:1.5px solid #E0E8F0;cursor:pointer;background:#FAFCFF;transition:all .15s}
+.opt:hover{background:#F0F4FA;border-color:#B5D4F4}
+.opt.sel{background:#EAF1FB;border-color:#003087}
+.opt.ok{background:#EAF5EE;border-color:#1D6F42}
+.opt.ng{background:#FDF0F0;border-color:#A32D2D}
+.ol{width:22px;height:22px;border-radius:50%;background:#F0F4FA;border:1.5px solid #D0DBF0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#888;flex-shrink:0;margin-top:1px}
+.opt.sel .ol{background:#003087;color:#fff;border-color:#003087}
+.opt.ok .ol{background:#1D6F42;color:#fff;border-color:#1D6F42}
+.opt.ng .ol{background:#A32D2D;color:#fff;border-color:#A32D2D}
+.ot{font-size:13px;line-height:1.5}
+.fb{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:12px;line-height:1.6}
+.fbok{background:#EAF5EE;color:#155724;border:1px solid #A8D8B8}
+.fbng{background:#FDF0F0;color:#721C24;border:1px solid #F0B4BA}
+.ota{width:100%;min-height:70px;padding:10px;border-radius:8px;border:1.5px solid #D0DBF0;background:#F8FAFD;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px}
+.ota:focus{outline:none;border-color:#003087}
+.scrow{display:flex;gap:8px;margin-top:10px}
+.scb{width:42px;height:42px;border-radius:8px;border:1.5px solid #D0DBF0;background:#F8FAFD;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.scb:hover{border-color:#003087;color:#003087}
+.scb.on{background:#003087;color:#fff;border-color:#003087}
+.evalbox{background:#fff;border:1.5px solid #E0E8F0;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.etitle{font-size:13px;font-weight:700;margin-bottom:3px}
+.esub{font-size:11px;color:#888;margin-bottom:8px}
+.stars{display:flex;gap:6px;margin-top:6px}
+.star{font-size:28px;cursor:pointer;color:#DDD;background:none;border:none;padding:2px;line-height:1;transition:color .15s}
+.star:hover{color:#C0A500}.star.on{color:#C0A500}
+.sc5{display:flex;gap:5px;margin-top:8px}
+.s5{flex:1;padding:8px 3px;border-radius:8px;border:1.5px solid #D0DBF0;background:#F8FAFD;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s}
+.s5:hover{border-color:#003087;color:#003087}.s5.on{background:#003087;color:#fff;border-color:#003087}
+.ynrow{display:flex;gap:8px;margin-top:8px}
+.yn{flex:1;padding:9px;border-radius:8px;border:1.5px solid #D0DBF0;background:#F8FAFD;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s}
+.yn:hover{border-color:#003087}.yn.on{background:#003087;color:#fff;border-color:#003087}
+.profbar{background:#EAF1FB;border:1px solid #B5D4F4;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.ava{width:38px;height:38px;border-radius:50%;background:#003087;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.steprow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;margin-bottom:8px;border:1.5px solid #E0E8F0;background:#FAFCFF}
+.stepicon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.priv{background:#EAF5EE;border:1px solid #A8D8B8;border-radius:8px;padding:10px 13px;font-size:12px;color:#155724;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px}
+.ebarrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F0F4FA}
+.ebarrow:last-child{border-bottom:none}
+/* Question Bank Editor */
+.qb-item{background:#fff;border:1px solid #E0E8F0;border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
+.qb-item:hover{border-color:#B5D4F4}
+.qb-num{display:inline-block;background:#003087;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:8px}
+.qb-q{font-size:13px;font-weight:600;color:#1A1A2E;margin-bottom:6px}
+.qb-opts{font-size:12px;color:#555;margin-bottom:4px}
+.qb-ans{font-size:12px;color:#1D6F42;font-weight:600}
+.qb-actions{display:flex;gap:6px;margin-top:8px}
+.qb-bank{background:#FFFBEA;border:1px solid #F0D060;border-radius:10px;padding:12px;margin-bottom:10px}
+.qb-bank-title{font-size:13px;font-weight:700;color:#7A3800;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+.qb-bank-sub{font-size:11px;color:#A05010;margin-bottom:8px}
+.qb-bank-btns{display:flex;gap:6px;flex-wrap:wrap}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:20px;width:92%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:700;color:#003087;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.opt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.opt-row input{flex:1}
+.opt-row .ans-radio{width:18px;height:18px;cursor:pointer;flex-shrink:0}
+@media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}}
+
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar">
+  <div>
+    <div class="tt"><i class="ti ti-broadcast"></i> منصة التقييم المركزية — الإدارة بالأهداف ومؤشرات الأداء</div>
+    <div class="ts">اختبار قبل وبعد + تقييم الدورة والمدرب + بنك أسئلة الإدارة بالأهداف وKPIs · MTCIT 2026</div>
+  </div>
+  <div class="rtog">
+    <button class="rtb" id="rb-adm" onclick="setRole('adm')"><i class="ti ti-shield"></i> مشرف</button>
+    <button class="rtb"    id="rb-qb"  onclick="setRole('qb')"><i class="ti ti-list-check"></i> الأسئلة</button>
+    <button class="rtb on"    id="rb-tr"  onclick="setRole('tr')"><i class="ti ti-user"></i> متدرب</button>
+  </div>
+</div>
+<div class="sbar">
+  <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
+  <span id="stxt">جاهز</span>
+</div>
+<div class="content">
+
+<div class="view" id="v-adm">
+  <div id="adm-toast" class="toast"></div>
+  <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
+  <div class="card">
+    <div class="r2">
+      <div><div class="lbl"><span class="req">*</span>اسم الدورة / الدفعة</div>
+        <input type="text" id="a-batch" placeholder="الإدارة بالأهداف ومؤشرات الأداء — دفعة 1 — 2026"></div>
+      <div><div class="lbl"><span class="req">*</span>اسم المدرب</div>
+        <input type="text" id="a-trainer" placeholder="اسم المدرب الكامل"></div>
+    </div>
+    <div class="r2">
+      <div><div class="lbl">تاريخ البداية</div><input type="text" id="a-start" placeholder="2025-06-10"></div>
+      <div><div class="lbl">الموعد النهائي</div><input type="text" id="a-deadline" placeholder="2025-06-20"></div>
+    </div>
+    <div><div class="lbl"><span class="req">*</span>بنك الأسئلة لهذه الجلسة</div>
+      <select id="a-qbank" style="margin-bottom:10px">
+        <option value="">— اختر بنك الأسئلة —</option>
+      </select>
+    </div>
+    <div id="a-qbank-preview" style="display:none" class="card cyellow" style="margin-top:0">
+      <div style="font-size:12px;font-weight:700;color:#7A3800;margin-bottom:4px" id="a-qbank-info"></div>
+    </div>
+    <button class="bp bp-full" onclick="createSession()"><i class="ti ti-key"></i> إنشاء الجلسة وتوليد رمز المشاركة</button>
+  </div>
+
+  <div class="sec"><div class="sec-l"><i class="ti ti-refresh"></i> تحميل جلسة موجودة</div></div>
+  <div class="card">
+    <div class="r2">
+      <div><div class="lbl">رمز الجلسة (6 أحرف)</div>
+        <input type="text" id="a-code" placeholder="AGILE3"
+          style="letter-spacing:4px;text-transform:uppercase;text-align:center;font-size:18px;font-weight:700"
+          maxlength="6" oninput="this.value=this.value.toUpperCase()"></div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="bp" onclick="loadSession()"><i class="ti ti-download"></i> تحميل البيانات</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adm-panel" style="display:none">
+    <div id="adm-banner" class="card cblue"></div>
+    <div class="sec"><div class="sec-l"><i class="ti ti-chart-bar"></i> ملخص الأداء الكامل</div></div>
+    <div class="krow5">
+      <div class="kc"><div class="kv" id="k-tot">0</div><div class="kl">مسجلون</div></div>
+      <div class="kc"><div class="kv" id="k-pre">0</div><div class="kl">أكملوا قبل</div></div>
+      <div class="kc"><div class="kv" id="k-post">0</div><div class="kl">أكملوا بعد</div></div>
+      <div class="kc"><div class="kv" id="k-gap">—</div><div class="kl">متوسط الفجوة</div></div>
+      <div class="kc"><div class="kv" id="k-eval">—</div><div class="kl">تقييم الدورة</div></div>
+    </div>
+    <div class="sec"><div class="sec-l"><i class="ti ti-star"></i> ملخص تقييم الدورة والمدرب</div></div>
+    <div id="eval-summary" class="card"></div>
+    <div class="sec">
+      <div class="sec-l"><i class="ti ti-users"></i> سجلات المتدربين</div>
+      <button class="bs" onclick="loadSession()"><i class="ti ti-refresh"></i> تحديث</button>
+    </div>
+    <div class="tw"><table>
+      <thead><tr>
+        <th style="width:14%">الاسم</th><th style="width:12%">الرقم الوظيفي</th><th style="width:12%">الإدارة</th>
+        <th style="width:7%">قبل</th><th style="width:7%">بعد</th><th style="width:8%">فجوة</th>
+        <th style="width:9%">الدورة</th><th style="width:9%">المدرب</th>
+        <th style="width:10%">الحالة</th><th style="width:12%">تاريخ</th>
+      </tr></thead>
+      <tbody id="adm-tbody"></tbody>
+    </table></div>
+    <div class="exprow">
+      <button class="bs" onclick="doExport('csv')"><i class="ti ti-table-export"></i> CSV</button>
+      <button class="bs" onclick="doExport('json')"><i class="ti ti-braces"></i> JSON</button>
+      <button class="bs" onclick="doExport('copy')"><i class="ti ti-copy"></i> نسخ</button>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="v-qb">
+  <div id="qb-toast" class="toast"></div>
+
+  <div class="sec">
+    <div class="sec-l"><i class="ti ti-library"></i> بنوك الأسئلة المحفوظة</div>
+    <button class="bp bpa" onclick="showNewBankModal()"><i class="ti ti-plus"></i> بنك جديد</button>
+  </div>
+  <div id="qb-banks-list">
+    <div style="text-align:center;padding:20px;color:#888;font-size:13px">
+      <i class="ti ti-books" style="font-size:24px;display:block;margin-bottom:8px"></i>
+      لا بنوك أسئلة بعد — أنشئ بنكاً جديداً
+    </div>
+  </div>
+
+  <div class="sec"><div class="sec-l"><i class="ti ti-file-import"></i> استيراد / تصدير</div></div>
+  <div class="card">
+    <div class="r2">
+      <div>
+        <div class="lbl">استيراد بنك أسئلة من ملف JSON أو CSV أو XLSX</div>
+        <input type="file" id="qb-import-file" accept=".json,.csv,.xlsx,.xls" onchange="importBank()" style="font-size:12px;padding:6px">
+        <div style="font-size:11px;color:#888;margin-top:6px;line-height:1.6">
+          أعمدة CSV/XLSX المطلوبة: bank_name, question_type, section, question, option_1, option_2, option_3, option_4, correct_answer, explanation, placeholder, scale_min, scale_max
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">
+        <button class="bp" onclick="exportAllBanks()"><i class="ti ti-download"></i> JSON</button>
+        <button class="bp bpg" onclick="exportAllBanksCSV()"><i class="ti ti-table-export"></i> CSV</button>
+        <button class="bp bpp" onclick="exportAllBanksXLSX()"><i class="ti ti-file-spreadsheet"></i> XLSX</button>
+        <button class="bs" onclick="downloadQuestionsTemplate('csv')"><i class="ti ti-file-type-csv"></i> قالب CSV</button>
+        <button class="bs" onclick="downloadQuestionsTemplate('xlsx')"><i class="ti ti-file-spreadsheet"></i> قالب XLSX</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="view on" id="v-tr">
+  <div id="tr-toast" class="toast"></div>
+  <div id="tr-s1">
+    <div style="text-align:center;padding:24px 0 16px">
+      <div style="width:56px;height:56px;border-radius:50%;background:#EAF1FB;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <i class="ti ti-user-check" style="font-size:26px;color:#003087"></i>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#003087;margin-bottom:4px">بوابة المتدرب</div>
+      <div style="font-size:13px;color:#666">أدخل رمز الجلسة ورقمك الوظيفي للمتابعة من حيث توقفت</div>
+    </div>
+    <div class="card">
+      <div class="priv"><i class="ti ti-lock" style="flex-shrink:0;margin-top:1px"></i> بياناتك محمية — لا يطّلع عليها المتدربون الآخرون</div>
+      <div class="r2">
+        <div><div class="lbl"><span class="req">*</span>رمز الجلسة</div>
+          <input type="text" id="tr-code" placeholder="AGILE3"
+            style="text-align:center;font-size:22px;font-weight:700;letter-spacing:8px;text-transform:uppercase"
+            maxlength="6" oninput="this.value=this.value.toUpperCase()"></div>
+        <div><div class="lbl">الرقم الوظيفي (للعودة لسجلك)</div>
+          <input type="text" id="tr-eid-l" placeholder="MTCIT-1234 — فارغ إن كنت جديداً"></div>
+      </div>
+      <button class="bp bp-full" onclick="trJoin()"><i class="ti ti-arrow-left"></i> تحقق واستأنف</button>
+    </div>
+  </div>
+  <div id="tr-s2" style="display:none">
+    <div id="tr-sess-banner" class="card cblue" style="margin-bottom:14px"></div>
+    <div class="sec"><div class="sec-l"><i class="ti ti-id-badge"></i> بياناتك الشخصية</div></div>
+    <div class="card">
+      <div class="r2">
+        <div><div class="lbl"><span class="req">*</span>الاسم الكامل</div><input type="text" id="tr-name" placeholder="محمد بن سالم البوسعيدي"></div>
+        <div><div class="lbl"><span class="req">*</span>الرقم الوظيفي</div><input type="text" id="tr-eid" placeholder="MTCIT-1234"></div>
+      </div>
+      <div class="r2">
+        <div><div class="lbl"><span class="req">*</span>الإدارة</div>
+          <select id="tr-dept">
+            <option value="">— اختر —</option>
+            <option>دائرة التحول الرقمي</option><option>دائرة الخدمات الرقمية</option>
+            <option>دائرة البنية التحتية</option><option>دائرة الأمن السيبراني</option>
+            <option>دائرة مشاريع الطرق</option><option>دائرة النقل البري</option>
+            <option>دائرة النقل البحري</option><option>الإدارة المالية</option>
+            <option>الموارد البشرية</option><option>أخرى</option>
+          </select></div>
+        <div><div class="lbl">المسمى الوظيفي</div><input type="text" id="tr-title" placeholder="مدير مشاريع"></div>
+      </div>
+      <button class="bp bp-full" onclick="trRegister()"><i class="ti ti-player-play"></i> تأكيد وبدء الاختبار</button>
+    </div>
+  </div>
+  <div id="tr-s3" style="display:none">
+    <div id="resume-banner" class="card cblue" style="margin-bottom:14px"></div>
+    <div style="font-size:14px;font-weight:700;color:#003087;margin-bottom:12px">وضعك الحالي في الدورة</div>
+    <div id="sr-pre" class="steprow">
+      <div class="stepicon" id="si-pre" style="background:#EAF5EE"><i class="ti ti-check" style="color:#1D6F42"></i></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">اختبار قبل الورشة</div>
+        <div style="font-size:12px;color:#888" id="sub-pre">—</div></div>
+      <span id="bdg-pre" class="bdg b1">مكتمل</span>
+    </div>
+    <div id="sr-post" class="steprow">
+      <div class="stepicon" id="si-post" style="background:#F0F4FA"><i class="ti ti-clock" style="color:#888"></i></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">اختبار بعد الورشة</div>
+        <div style="font-size:12px;color:#888" id="sub-post">في الانتظار</div></div>
+      <span id="bdg-post" class="bdg b3">في الانتظار</span>
+    </div>
+    <div id="sr-eval" class="steprow">
+      <div class="stepicon" id="si-eval" style="background:#F0EEFF"><i class="ti ti-star" style="color:#888"></i></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">تقييم الدورة والمدرب</div>
+        <div style="font-size:12px;color:#888" id="sub-eval">متاح بعد اختبار بعد</div></div>
+      <span id="bdg-eval" class="bdg b4">غير متاح</span>
+    </div>
+    <div style="margin-top:16px" id="resume-btns"></div>
+  </div>
+  <div id="tr-s4" style="display:none">
+    <div id="tr-profbar" class="profbar"></div>
+    <div class="psteps"><div class="ps" id="ps1">اختبار قبل</div><div class="ps" id="ps2">اختبار بعد</div><div class="ps" id="ps3">تقييم الدورة</div></div>
+    <div class="pbwrap">
+      <div class="pbrow"><span id="tr-ql">السؤال 1</span><span id="tr-qs" style="color:#888"></span></div>
+      <div class="pbtr"><div class="pbfi" id="tr-pb" style="width:5%;background:#003087"></div></div>
+    </div>
+    <div id="tr-qa" style="padding:12px 0"></div>
+    <div class="nrow" id="tr-nav">
+      <button class="ns" id="tr-back" onclick="trNav(-1)" style="display:none"><i class="ti ti-arrow-right"></i> السابق</button>
+      <button class="np" id="tr-fwd" onclick="trNav(1)">التالي <i class="ti ti-arrow-left"></i></button>
+    </div>
+    <div id="tr-res" style="display:none"></div>
+  </div>
+  <div id="tr-s5" style="display:none">
+    <div id="tr-eval-prof" class="profbar"></div>
+    <div class="psteps">
+      <div class="ps done">اختبار قبل &#10003;</div>
+      <div class="ps done">اختبار بعد &#10003;</div>
+      <div class="ps active">تقييم الدورة</div>
+    </div>
+    <div class="card cpurple" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <i class="ti ti-star" style="font-size:20px;color:#534AB7"></i>
+        <div><div style="font-size:14px;font-weight:700;color:#3E379A">تقييم الدورة التدريبية والمدرب</div>
+          <div style="font-size:12px;color:#7E75CC">إجاباتك سرية — لتحسين الدورات القادمة</div></div>
+      </div>
+    </div>
+    <div id="eval-form"></div>
+    <button class="bp bpp bp-full" id="btn-eval" onclick="saveEval()"><i class="ti ti-send"></i> إرسال التقييم وإنهاء</button>
+    <div id="eval-done"></div>
+  </div>
+</div>
+
+<!-- New Bank Modal -->
+<div class="modal-overlay" id="modal-bank">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-library"></i> <span id="modal-bank-title">إنشاء بنك أسئلة جديد</span></div>
+    <div class="lbl"><span class="req">*</span>اسم البنك</div>
+    <input type="text" id="mb-name" placeholder="مثال: الإدارة بالأهداف ومؤشرات الأداء — المستوى الأساسي" style="margin-bottom:12px">
+    <div class="lbl">وصف مختصر</div>
+    <input type="text" id="mb-desc" placeholder="مثال: 20 سؤال لقياس فهم Agile والتطبيق العملي" style="margin-bottom:16px">
+    <div style="display:flex;gap:8px">
+      <button class="bp" onclick="saveBankMeta()" style="flex:1"><i class="ti ti-check"></i> حفظ وإضافة الأسئلة</button>
+      <button class="bs" onclick="closeModal('modal-bank')" style="flex:0.4">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Question Editor Modal -->
+<div class="modal-overlay" id="modal-q">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-pencil"></i> <span id="modal-q-title">إضافة سؤال</span></div>
+    <input type="hidden" id="mq-idx" value="-1">
+    <div class="lbl">نوع السؤال</div>
+    <select id="mq-type" onchange="toggleQType()" style="margin-bottom:12px">
+      <option value="m">موضوعي (اختيار من متعدد)</option>
+      <option value="open">مفتوح (إجابة نصية)</option>
+      <option value="scale">مقياس (1-5)</option>
+    </select>
+    <div class="lbl">المحور / الموضوع</div>
+    <input type="text" id="mq-sec" placeholder="مثال: أسس Agile" style="margin-bottom:12px">
+    <div class="lbl"><span class="req">*</span>نص السؤال</div>
+    <textarea id="mq-q" placeholder="اكتب السؤال هنا..." style="margin-bottom:12px;min-height:70px"></textarea>
+    <div id="mq-opts-wrap">
+      <div class="lbl">الخيارات (ضع علامة &#9737; أمام الإجابة الصحيحة)</div>
+      <div id="mq-opts">
+        <div class="opt-row"><input type="radio" name="mq-ans" class="ans-radio" value="0"><input type="text" class="mq-opt" placeholder="الخيار أ"></div>
+        <div class="opt-row"><input type="radio" name="mq-ans" class="ans-radio" value="1"><input type="text" class="mq-opt" placeholder="الخيار ب"></div>
+        <div class="opt-row"><input type="radio" name="mq-ans" class="ans-radio" value="2"><input type="text" class="mq-opt" placeholder="الخيار ج"></div>
+        <div class="opt-row"><input type="radio" name="mq-ans" class="ans-radio" value="3"><input type="text" class="mq-opt" placeholder="الخيار د"></div>
+      </div>
+      <div class="lbl" style="margin-top:10px">تفسير الإجابة الصحيحة (اختياري)</div>
+      <textarea id="mq-exp" placeholder="اشرح لماذا هذه الإجابة صحيحة..." style="min-height:50px;margin-bottom:12px"></textarea>
+    </div>
+    <div id="mq-open-wrap" style="display:none">
+      <div class="lbl">نص placeholder للإجابة المفتوحة</div>
+      <input type="text" id="mq-ph" placeholder="مثال: 3-4 جمل كافية..." style="margin-bottom:12px">
+    </div>
+    <div id="mq-scale-wrap" style="display:none">
+      <div class="r2">
+        <div><div class="lbl">وصف القيمة 1 (الأدنى)</div><input type="text" id="mq-sl0" placeholder="لا ثقة إطلاقاً"></div>
+        <div><div class="lbl">وصف القيمة 5 (الأعلى)</div><input type="text" id="mq-sl1" placeholder="ثقة كاملة"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="bp" onclick="saveQuestion()" style="flex:1"><i class="ti ti-device-floppy"></i> حفظ السؤال</button>
+      <button class="bs" onclick="closeModal('modal-q')" style="flex:0.4">إلغاء</button>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<script>
+/* ===================== DEFAULT QUESTION BANK ===================== */
+var DEFAULT_QS = [
+  {
+    "t": "m",
+    "s": "مفاهيم الإدارة بالأهداف",
+    "q": "ما التعريف الأدق للإدارة بالأهداف MBO؟",
+    "o": [
+      "منهجية تعتمد على تنفيذ الأنشطة فقط",
+      "اتفاق المدير والموظف على أهداف واضحة وقابلة للقياس ثم تقييم الأداء بناءً على النتائج",
+      "نظام لمراقبة الحضور والانصراف",
+      "أسلوب لتوزيع المهام دون قياس"
+    ],
+    "a": 1,
+    "e": "الإدارة بالأهداف تركز على النتائج المتفق عليها والقابلة للقياس، وليس مجرد الأنشطة."
+  },
+  {
+    "t": "m",
+    "s": "مفاهيم الإدارة بالأهداف",
+    "q": "من طرح مفهوم الإدارة بالأهداف في كتاب The Practice of Management عام 1954؟",
+    "o": [
+      "Kaplan & Norton",
+      "Peter Drucker",
+      "Henry Fayol",
+      "Michael Porter"
+    ],
+    "a": 1,
+    "e": "يرتبط مفهوم MBO ببيتر دراكر وكتابه الصادر عام 1954."
+  },
+  {
+    "t": "m",
+    "s": "مفاهيم الإدارة بالأهداف",
+    "q": "أي خيار يمثل أحد المبادئ الأساسية للإدارة بالأهداف؟",
+    "o": [
+      "فرض الأهداف من الإدارة العليا فقط",
+      "متابعة الأداء في نهاية السنة فقط",
+      "تحديد الأهداف بشكل تشاركي",
+      "تقييم الموظف بالانطباع الشخصي"
+    ],
+    "a": 2,
+    "e": "من أهم مبادئ MBO التشارك والاتفاق على الأهداف بين المدير والموظف."
+  },
+  {
+    "t": "m",
+    "s": "دورة MBO",
+    "q": "ما الترتيب الصحيح لدورة الإدارة بالأهداف؟",
+    "o": [
+      "التنفيذ ← التعلم ← التخطيط ← التقييم",
+      "تحديد الأهداف ← التخطيط التنفيذي ← التنفيذ والمتابعة ← التقييم الدوري ← التعلم والتطوير",
+      "التقييم ← المكافأة ← التوثيق ← الإغلاق",
+      "اختيار المؤشر ← إعداد التقرير ← اعتماد الميزانية"
+    ],
+    "a": 1,
+    "e": "الدورة تبدأ بتحديد الأهداف ثم التخطيط والتنفيذ والمتابعة والتقييم ثم التعلم والتطوير."
+  },
+  {
+    "t": "m",
+    "s": "MBO في MTCIT",
+    "q": "ما المقصود بالتركيز على النتائج لا الأنشطة في MBO؟",
+    "o": [
+      "قياس عدد التقارير المكتوبة فقط",
+      "قياس أثر العمل مثل تحسين دقة البيانات أو تقليل وقت الخدمة",
+      "زيادة عدد الاجتماعات الأسبوعية",
+      "إلزام الموظف بمهام أكثر"
+    ],
+    "a": 1,
+    "e": "التركيز يكون على النتيجة القابلة للقياس مثل التحسن أو الأثر، وليس كمية النشاط فقط."
+  },
+  {
+    "t": "m",
+    "s": "الأهداف SMART",
+    "q": "ماذا يعني حرف S في معيار SMART؟",
+    "o": [
+      "Simple بسيط",
+      "Specific محدد",
+      "Strategic استراتيجي",
+      "Standard قياسي"
+    ],
+    "a": 1,
+    "e": "S تعني Specific أي أن الهدف محدد وواضح ولا يحتمل التأويل."
+  },
+  {
+    "t": "m",
+    "s": "الأهداف SMART",
+    "q": "أي مثال يُعد هدفاً SMART أفضل؟",
+    "o": [
+      "تحسين خدمات الوزارة",
+      "رفع معدل رضا مستفيدي منصة نقل من −56 إلى +20 بحلول ديسمبر 2026",
+      "بذل جهد أكبر في خدمة المستفيدين",
+      "العمل على تطوير الخدمات قريباً"
+    ],
+    "a": 1,
+    "e": "الهدف الصحيح يحتوي على رقم مستهدف وتاريخ ونطاق واضح."
+  },
+  {
+    "t": "m",
+    "s": "الأهداف SMART",
+    "q": "ماذا يعني حرف M في SMART؟",
+    "o": [
+      "قابل للإدارة",
+      "قابل للقياس",
+      "متعدد المحاور",
+      "مرتبط بالمدير"
+    ],
+    "a": 1,
+    "e": "M تعني Measurable أي وجود رقم أو أداة قياس واضحة لمعرفة النجاح."
+  },
+  {
+    "t": "m",
+    "s": "الأهداف SMART",
+    "q": "أي عبارة توضّح عنصر Time-bound في الهدف؟",
+    "o": [
+      "تحسين التقارير لاحقاً",
+      "تسليم نموذج تقرير KPI موحد بحلول 30 يونيو 2026",
+      "زيادة جودة العمل",
+      "تطوير مهارات الفريق"
+    ],
+    "a": 1,
+    "e": "Time-bound يعني أن الهدف له موعد بداية أو نهاية أو نقاط مراجعة زمنية محددة."
+  },
+  {
+    "t": "m",
+    "s": "الأهداف والمبادرات",
+    "q": "ما الفرق الأساسي بين الهدف والمبادرة؟",
+    "o": [
+      "الهدف يوضح النتيجة والمبادرة توضح النشاط أو المشروع الذي يساعد على تحقيقها",
+      "لا يوجد فرق",
+      "المبادرة تقاس دائماً بنسبة مئوية والهدف لا يقاس",
+      "الهدف نشاط يومي فقط"
+    ],
+    "a": 0,
+    "e": "الهدف يجيب: ماذا وكم ومتى؟ أما المبادرة فتجيب: كيف سنحقق ذلك؟"
+  },
+  {
+    "t": "m",
+    "s": "مؤشرات الأداء KPIs",
+    "q": "ما هو مؤشر الأداء الرئيسي KPI؟",
+    "o": [
+      "وصف عام غير قابل للقياس",
+      "قيمة قابلة للقياس توضّح مدى تحقيق الهدف",
+      "قائمة مهام تشغيلية",
+      "رأي المدير في أداء الفريق"
+    ],
+    "a": 1,
+    "e": "KPI يجب أن يكون قابلاً للقياس ومرتبطاً بهدف واضح."
+  },
+  {
+    "t": "m",
+    "s": "مؤشرات الأداء KPIs",
+    "q": "ما الفرق بين KPI وKRI؟",
+    "o": [
+      "KPI يقيس الأداء نحو الهدف، وKRI يقيس المخاطر التي قد تمنع الوصول",
+      "KRI هو نفسه KPI",
+      "KPI يقيس المخاطر فقط",
+      "KRI يستخدم للموارد البشرية فقط"
+    ],
+    "a": 0,
+    "e": "KPI للأداء والإنجاز، أما KRI فهو مؤشر مخاطر مبكر."
+  },
+  {
+    "t": "m",
+    "s": "Leading/Lagging",
+    "q": "ما المقصود بالمؤشر المتأخر Lagging؟",
+    "o": [
+      "يقيس النتيجة بعد حدوثها",
+      "يتنبأ بالنتيجة قبل حدوثها",
+      "يقيس خطة التدريب فقط",
+      "يستخدم يومياً فقط"
+    ],
+    "a": 0,
+    "e": "المؤشر المتأخر يقيس النتيجة النهائية بعد تحققها أو فشلها."
+  },
+  {
+    "t": "m",
+    "s": "Leading/Lagging",
+    "q": "أي مثال يمثل مؤشراً مبكراً Leading؟",
+    "o": [
+      "نسبة الخدمات الرقمية المنجزة في نهاية السنة",
+      "نسبة إنجاز مشاريع الرقمنة حتى الربع الثاني",
+      "معدل الرضا السنوي النهائي",
+      "عدد المشاريع المغلقة العام الماضي"
+    ],
+    "a": 1,
+    "e": "المؤشر المبكر يعطي إشارة قبل النتيجة النهائية حتى يمكن التصحيح."
+  },
+  {
+    "t": "m",
+    "s": "أنواع المؤشرات",
+    "q": "أي مؤشر يُعد من مؤشرات الكفاءة Efficiency؟",
+    "o": [
+      "رضا المستفيد النهائي",
+      "متوسط تكلفة معالجة الطلب الواحد",
+      "الأثر الاقتصادي بعيد المدى",
+      "سمعة الجهة"
+    ],
+    "a": 1,
+    "e": "الكفاءة تقيس استخدام الموارد مثل الوقت والتكلفة والجهد."
+  },
+  {
+    "t": "m",
+    "s": "بطاقة الأداء المتوازن BSC",
+    "q": "أي منظور في BSC يركز على قيمة الخدمة للمواطن أو المقيم؟",
+    "o": [
+      "المالي والكفاءة",
+      "التعلم والنمو",
+      "المستفيد",
+      "العمليات الداخلية"
+    ],
+    "a": 2,
+    "e": "منظور المستفيد يركز على الرضا، الوقت، السهولة، والشكاوى."
+  },
+  {
+    "t": "m",
+    "s": "اختيار المؤشر المناسب",
+    "q": "وفق قاعدة اختيار المؤشر المناسب، ماذا نفعل إذا كان المؤشر لا يرتبط بهدف استراتيجي؟",
+    "o": [
+      "نقيسه للاحتياط",
+      "نضيفه للتقرير فقط",
+      "لا نقيسه",
+      "نرفعه للقيادة مباشرة"
+    ],
+    "a": 2,
+    "e": "إذا لم يكن المؤشر مرتبطاً بهدف واضح فلا يضيف قيمة لاتخاذ القرار."
+  },
+  {
+    "t": "m",
+    "s": "KPI Card",
+    "q": "أي حقل من حقول بطاقة المؤشر يوضح الصيغة الرياضية الدقيقة للحساب؟",
+    "o": [
+      "اسم المؤشر",
+      "معادلة الاحتساب",
+      "الفريق المسؤول",
+      "القيمة الأساسية"
+    ],
+    "a": 1,
+    "e": "معادلة الاحتساب تحدد كيف يتم حساب قيمة المؤشر بدقة."
+  },
+  {
+    "t": "open",
+    "s": "تطبيق عملي",
+    "q": "حوّل الهدف الضعيف التالي إلى هدف SMART: تحسين خدمة العملاء.",
+    "ph": "اكتب هدفاً يحتوي على رقم مستهدف وتاريخ ومجال تطبيق واضح..."
+  },
+  {
+    "t": "scale",
+    "s": "التقييم الذاتي",
+    "q": "ما مستوى ثقتك في بناء بطاقة KPI كاملة بعد الورشة؟",
+    "sl": [
+      "لا أستطيع بناء البطاقة",
+      "أستطيع بناء بطاقة KPI كاملة بثقة"
+    ]
+  }
+];
+
+var EQS = [
+  {id:'course_overall',type:'stars',label:'التقييم العام للدورة',sub:'ما تقييمك الإجمالي لهذه الدورة؟'},
+  {id:'content_quality',type:'sc5',label:'جودة المحتوى',sub:'هل كان واضحاً ومناسباً لعملك؟',opts:['ضعيف','مقبول','جيد','جيد جداً','ممتاز']},
+  {id:'trainer_knowledge',type:'stars',label:'كفاءة المدرب',sub:'هل أظهر معرفة عميقة بالمادة؟'},
+  {id:'trainer_delivery',type:'sc5',label:'أسلوب تقديم المدرب',sub:'هل كان الشرح واضحاً وجذاباً؟',opts:['ضعيف','مقبول','جيد','جيد جداً','ممتاز']},
+  {id:'trainer_interaction',type:'stars',label:'تفاعل المدرب',sub:'هل كان متجاوباً مع الأسئلة؟'},
+  {id:'time_management',type:'sc5',label:'إدارة الوقت',sub:'هل كانت المدة وتوزيع الوقت مناسبَين؟',opts:['سيئة','ضعيفة','مقبولة','جيدة','ممتازة']},
+  {id:'practical_exercises',type:'sc5',label:'التطبيقات العملية',sub:'هل كانت الأنشطة كافية ومفيدة؟',opts:['غير كافية','قليلة','مقبولة','جيدة','ممتازة']},
+  {id:'relevance_to_work',type:'sc5',label:'صلة الدورة بالعمل',sub:'هل يمكنك تطبيق ما تعلمته؟',opts:['لا صلة','ضعيفة','متوسطة','جيدة','ممتازة']},
+  {id:'recommend',type:'yn',label:'هل توصي بالدورة لزملائك؟',sub:''},
+  {id:'best_part',type:'text',label:'أفضل شيء في الدورة',sub:'ما الجانب الذي استفدت منه أكثر؟',ph:'اكتب هنا...'},
+  {id:'improvement',type:'text',label:'مقترحات التحسين',sub:'ما الذي تقترح تحسينه؟',ph:'اكتب هنا...'}
+];
+
+/* ===================== STATE ===================== */
+var currentCode = null;
+var currentBankId = null;
+var editingBankId = null;
+var ADMIN_PASSWORD = 'MTCIT2026';
+var adminUnlocked = false;
+var tr = {code:null,rec:null,qs:[],mode:'pre',idx:0,ans:[],rev:[],ev:{}};
+
+/* ===================== CENTRAL STORAGE CONFIG =====================
+   ضع رابط Web App من Google Apps Script أو رابط Power Automate هنا.
+   العقد المطلوب للـ API:
+   POST { action:'getDB' }  =>  يرجع { sessions:{}, records:{}, banks:{} }
+   POST { action:'setDB', db:{...} }  =>  يرجع { ok:true }
+   عند ترك الرابط فارغاً سيتم التخزين محلياً كنسخة احتياطية.
+=================================================================== */
+var CENTRAL_API_URL = 'https://script.google.com/macros/s/AKfycbzIzOY3hCDLk5uT1-dR3qsTiMiAdOrV2lgaJc_UX6IQVJSv-Bbio2yL2QGF_0DlHRWw/exec'; // مثال Google Apps Script: https://script.google.com/macros/s/XXXXX/exec
+var STORAGE_KEY = 'mtcit_mbo_kpi_v1';
+var CENTRAL_STORAGE_ENABLED = CENTRAL_API_URL && CENTRAL_API_URL.indexOf('http') === 0;
+var DB_CACHE = null;
+
+/* ===================== STORAGE ===================== */
+function emptyDB(){return {sessions:{},records:{},banks:{}};}
+function normalizeDB(d){
+  d=d||emptyDB();
+  if(!d.sessions)d.sessions={};
+  if(!d.records)d.records={};
+  if(!d.banks)d.banks={};
+  return d;
+}
+function localGetDB(){try{return normalizeDB(JSON.parse(localStorage.getItem(STORAGE_KEY)||'{"sessions":{},"records":{},"banks":{}}'));}catch(e){return emptyDB();}}
+function localSetDB(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(normalizeDB(d)));}
+function centralRequest(payload){
+  if(!CENTRAL_STORAGE_ENABLED)return null;
+  try{
+    var xhr=new XMLHttpRequest();
+    xhr.open('POST',CENTRAL_API_URL,false);
+    xhr.setRequestHeader('Content-Type','text/plain;charset=utf-8');
+    xhr.send(JSON.stringify(payload));
+    if(xhr.status>=200&&xhr.status<300){
+      return JSON.parse(xhr.responseText||'{}');
+    }
+  }catch(e){console.warn('Central storage error:',e);}
+  return null;
+}
+function getDB(){
+  if(CENTRAL_STORAGE_ENABLED){
+    var res=centralRequest({action:'getDB'});
+    if(res){DB_CACHE=normalizeDB(res.db||res); localSetDB(DB_CACHE); return DB_CACHE;}
+    setStatus('تعذر الاتصال بالتخزين المركزي — يتم استخدام نسخة محلية مؤقتة','#DC3545');
+  }
+  DB_CACHE=localGetDB();
+  return DB_CACHE;
+}
+function setDB(d){
+  d=normalizeDB(d);
+  DB_CACHE=d;
+  localSetDB(d); // نسخة احتياطية محلية
+  if(CENTRAL_STORAGE_ENABLED){
+    var res=centralRequest({action:'setDB',db:d,updatedAt:new Date().toISOString()});
+    if(!res||res.ok!==true){
+      setStatus('لم يتم الحفظ مركزياً — حُفظت نسخة محلية مؤقتة','#DC3545');
+      return;
+    }
+    setStatus('تم الحفظ مركزياً','#28A745');
+  }
+}
+
+/* ===================== UTILS ===================== */
+function setStatus(m,c){document.getElementById('stxt').textContent=m;document.getElementById('sdot').style.background=c||'#28A745';}
+function showToast(id,m,t){var e=document.getElementById(id);e.className='toast '+t;e.textContent=m;setTimeout(function(){e.style.display='none';e.className='toast';},5000);}
+function genCode(){var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s='';for(var i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s;}
+function genId(){return 'bk_'+Date.now()+'_'+Math.floor(Math.random()*9999);}
+function avg(a){var f=a.filter(function(x){return x!=null&&x>0;});return f.length?f.reduce(function(s,v){return s+v;},0)/f.length:0;}
+function stars(v,max){max=max||5;var s='';for(var i=1;i<=max;i++)s+='<span style="color:'+(i<=v?'#C0A500':'#DDD')+';font-size:15px">&#9733;</span>';return s;}
+function show(id,d){var e=document.getElementById(id);if(e)e.style.display=d||'block';}
+function hide(id){var e=document.getElementById(id);if(e)e.style.display='none';}
+function setRole(r){
+  if((r==='adm'||r==='qb')&&!adminUnlocked){
+    var p=prompt('هذه الصفحة مخصصة للمشرف فقط. أدخل كلمة السر:');
+    if(p!==ADMIN_PASSWORD){
+      setStatus('تم رفض الدخول — كلمة السر غير صحيحة','#DC3545');
+      ['adm','qb','tr'].forEach(function(x){
+        document.getElementById('v-'+x).classList.toggle('on',x==='tr');
+        document.getElementById('rb-'+x).classList.toggle('on',x==='tr');
+      });
+      return;
+    }
+    adminUnlocked=true;
+    setStatus('تم فتح صلاحيات المشرف لهذه الجلسة','#28A745');
+  }
+  ['adm','qb','tr'].forEach(function(x){
+    document.getElementById('v-'+x).classList.toggle('on',x===r);
+    document.getElementById('rb-'+x).classList.toggle('on',x===r);
+  });
+  if(r==='qb')renderBanksList();
+  if(r==='adm')populateBankSelect();
+}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+/* ===================== QUESTION BANK MANAGEMENT ===================== */
+function initDefaultBank(){
+  var db=getDB();
+  if(!db.banks)db.banks={};
+  var hasDefault=false;
+  for(var k in db.banks){if(db.banks[k].isDefault){hasDefault=true;break;}}
+  if(!hasDefault){
+    var id=genId();
+    db.banks[id]={id:id,name:'الإدارة بالأهداف ومؤشرات الأداء — الأساسي',desc:'20 سؤالاً من ورشة الإدارة بالأهداف وبناء مؤشرات الأداء الرئيسية',questions:DEFAULT_QS,isDefault:true,created:new Date().toISOString()};
+    setDB(db);
+  }
+}
+
+function renderBanksList(){
+  var db=getDB();
+  var div=document.getElementById('qb-banks-list');
+  var banks=Object.values(db.banks||{});
+  if(!banks.length){
+    div.innerHTML='<div style="text-align:center;padding:20px;color:#888;font-size:13px"><i class="ti ti-books" style="font-size:24px;display:block;margin-bottom:8px"></i>لا بنوك أسئلة بعد</div>';
+    return;
+  }
+  div.innerHTML=banks.map(function(b){
+    var mcq=b.questions.filter(function(q){return q.t==='m';}).length;
+    var open=b.questions.filter(function(q){return q.t==='open';}).length;
+    var scale=b.questions.filter(function(q){return q.t==='scale';}).length;
+    var secs=[...new Set(b.questions.map(function(q){return q.s;}))];
+    return '<div class="qb-bank">'
+      +'<div class="qb-bank-title"><span><i class="ti ti-books" style="margin-left:5px"></i>'+b.name+(b.isDefault?'  <span class="bdg b2">افتراضي</span>':'')+'</span>'
+      +'<span style="font-size:12px;color:#888">'+b.questions.length+' سؤال</span></div>'
+      +'<div class="qb-bank-sub">'+(b.desc||'')+'</div>'
+      +'<div style="font-size:12px;color:#888;margin-bottom:10px">'
+      +'<span class="bdg b2" style="margin-left:6px">'+mcq+' موضوعي</span>'
+      +'<span class="bdg b3" style="margin-left:6px">'+open+' مفتوح</span>'
+      +'<span class="bdg b6" style="margin-left:6px">'+scale+' مقياس</span>'
+      +'<span style="margin-right:8px;color:#888">المحاور: '+secs.join(' · ')+'</span></div>'
+      +'<div class="qb-bank-btns">'
+      +'<button class="bp" onclick="editBank(\''+b.id+'\')" style="flex:0;padding:7px 12px;font-size:12px"><i class="ti ti-pencil"></i> تعديل الأسئلة</button>'
+      +'<button class="bp bpg" onclick="duplicateBank(\''+b.id+'\')" style="flex:0;padding:7px 12px;font-size:12px"><i class="ti ti-copy"></i> نسخ</button>'
+      +'<button class="bs" onclick="exportBank(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-download"></i> JSON</button>'
+      +'<button class="bs" onclick="exportBankCSV(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-table-export"></i> CSV</button>'
+      +'<button class="bs" onclick="exportBankXLSX(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-file-spreadsheet"></i> XLSX</button>'
+      +(b.isDefault?'':'<button class="bp bpr" onclick="deleteBank(\''+b.id+'\')" style="flex:0;padding:7px 12px;font-size:12px"><i class="ti ti-trash"></i></button>')
+      +'</div></div>';
+  }).join('');
+}
+
+function showNewBankModal(){
+  editingBankId=null;
+  document.getElementById('modal-bank-title').textContent='إنشاء بنك أسئلة جديد';
+  document.getElementById('mb-name').value='';
+  document.getElementById('mb-desc').value='';
+  openModal('modal-bank');
+}
+
+function saveBankMeta(){
+  var name=document.getElementById('mb-name').value.trim();
+  if(!name){showToast('qb-toast','اسم البنك مطلوب.','ter');return;}
+  var db=getDB();
+  if(!db.banks)db.banks={};
+  var id=editingBankId||genId();
+  if(!db.banks[id]){
+    db.banks[id]={id:id,name:name,desc:document.getElementById('mb-desc').value.trim(),questions:[],created:new Date().toISOString()};
+  } else {
+    db.banks[id].name=name;
+    db.banks[id].desc=document.getElementById('mb-desc').value.trim();
+  }
+  setDB(db);
+  closeModal('modal-bank');
+  currentBankId=id;
+  renderBankEditor(id);
+  showToast('qb-toast','تم حفظ البنك — أضف الأسئلة الآن','tok');
+}
+
+function editBank(id){
+  currentBankId=id;
+  renderBankEditor(id);
+}
+
+function renderBankEditor(id){
+  var db=getDB();
+  var bank=db.banks[id];
+  if(!bank)return;
+  var div=document.getElementById('qb-banks-list');
+  var qs=bank.questions;
+  var html='<div style="margin-bottom:14px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    +'<button class="bs" onclick="renderBanksList()"><i class="ti ti-arrow-right"></i> رجوع للقائمة</button>'
+    +'<div style="font-size:15px;font-weight:700;color:#003087">'+bank.name+'</div>'
+    +'<span class="bdg b2">'+qs.length+' سؤال</span></div>'
+    +'<button class="bp bpg" onclick="showAddQModal()" style="margin-bottom:10px"><i class="ti ti-plus"></i> إضافة سؤال جديد</button>'
+    +'</div>';
+  if(!qs.length){html+='<div style="text-align:center;padding:20px;color:#888;font-size:13px">لا أسئلة بعد — أضف أول سؤال</div>';}
+  else{
+    html+=qs.map(function(q,i){
+      var typeLabel=q.t==='m'?'موضوعي':q.t==='open'?'مفتوح':'مقياس';
+      var typeCls=q.t==='m'?'b2':q.t==='open'?'b3':'b6';
+      var optText='';
+      if(q.t==='m'&&q.o){optText='<div class="qb-opts">'+q.o.map(function(o,j){return '<span style="color:'+(j===q.a?'#1D6F42':'#888')+'">'+(j===q.a?'✓ ':'')+['أ','ب','ج','د'][j]+'. '+o+'</span>';}).join(' &nbsp;|&nbsp; ')+'</div>';}
+      return '<div class="qb-item">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
+        +'<div style="flex:1">'
+        +'<span class="qb-num">س'+(i+1)+'</span> <span class="bdg '+typeCls+'" style="margin-bottom:6px">'+typeLabel+'</span>'
+        +(q.s?'<span style="font-size:11px;color:#888;margin-right:6px">'+q.s+'</span>':'')
+        +'<div class="qb-q">'+q.q+'</div>'
+        +optText+'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">'
+        +'<button class="bs" onclick="editQuestion('+i+')" style="font-size:11px;padding:4px 8px"><i class="ti ti-pencil"></i></button>'
+        +(i>0?'<button class="bs" onclick="moveQ('+i+',-1)" style="font-size:11px;padding:4px 8px"><i class="ti ti-arrow-up"></i></button>':'')
+        +(i<qs.length-1?'<button class="bs" onclick="moveQ('+i+',1)" style="font-size:11px;padding:4px 8px"><i class="ti ti-arrow-down"></i></button>':'')
+        +'<button class="bp bpr" onclick="deleteQuestion('+i+')" style="padding:4px 8px;font-size:11px"><i class="ti ti-trash"></i></button>'
+        +'</div></div></div>';
+    }).join('');
+  }
+  div.innerHTML=html;
+}
+
+function showAddQModal(){
+  document.getElementById('mq-idx').value='-1';
+  document.getElementById('modal-q-title').textContent='إضافة سؤال جديد';
+  document.getElementById('mq-type').value='m';
+  document.getElementById('mq-sec').value='';
+  document.getElementById('mq-q').value='';
+  document.getElementById('mq-exp').value='';
+  document.getElementById('mq-ph').value='';
+  document.getElementById('mq-sl0').value='';
+  document.getElementById('mq-sl1').value='';
+  document.querySelectorAll('.mq-opt').forEach(function(el){el.value='';});
+  document.querySelectorAll('.ans-radio').forEach(function(el){el.checked=false;});
+  toggleQType();
+  openModal('modal-q');
+}
+
+function editQuestion(idx){
+  var db=getDB();
+  var q=db.banks[currentBankId].questions[idx];
+  document.getElementById('mq-idx').value=idx;
+  document.getElementById('modal-q-title').textContent='تعديل السؤال '+(idx+1);
+  document.getElementById('mq-type').value=q.t;
+  document.getElementById('mq-sec').value=q.s||'';
+  document.getElementById('mq-q').value=q.q||'';
+  document.getElementById('mq-exp').value=q.e||'';
+  document.getElementById('mq-ph').value=q.ph||'';
+  document.getElementById('mq-sl0').value=(q.sl&&q.sl[0])||'';
+  document.getElementById('mq-sl1').value=(q.sl&&q.sl[1])||'';
+  var opts=document.querySelectorAll('.mq-opt');
+  var radios=document.querySelectorAll('.ans-radio');
+  opts.forEach(function(el,i){el.value=(q.o&&q.o[i])||'';});
+  radios.forEach(function(el,i){el.checked=(q.a===i);});
+  toggleQType();
+  openModal('modal-q');
+}
+
+function toggleQType(){
+  var t=document.getElementById('mq-type').value;
+  document.getElementById('mq-opts-wrap').style.display=t==='m'?'block':'none';
+  document.getElementById('mq-open-wrap').style.display=t==='open'?'block':'none';
+  document.getElementById('mq-scale-wrap').style.display=t==='scale'?'block':'none';
+}
+
+function saveQuestion(){
+  var t=document.getElementById('mq-type').value;
+  var q_text=document.getElementById('mq-q').value.trim();
+  var sec=document.getElementById('mq-sec').value.trim();
+  if(!q_text){showToast('qb-toast','نص السؤال مطلوب.','ter');return;}
+  var q={t:t,s:sec,q:q_text};
+  if(t==='m'){
+    var opts=[];
+    document.querySelectorAll('.mq-opt').forEach(function(el){opts.push(el.value.trim());});
+    opts=opts.filter(function(o){return o;});
+    if(opts.length<2){showToast('qb-toast','أضف خيارَين على الأقل.','ter');return;}
+    var ans=-1;
+    document.querySelectorAll('.ans-radio').forEach(function(el,i){if(el.checked)ans=i;});
+    if(ans<0){showToast('qb-toast','حدد الإجابة الصحيحة.','ter');return;}
+    q.o=opts;q.a=ans;q.e=document.getElementById('mq-exp').value.trim();
+  } else if(t==='open'){
+    q.ph=document.getElementById('mq-ph').value.trim()||'اكتب إجابتك هنا...';
+  } else if(t==='scale'){
+    q.sl=[document.getElementById('mq-sl0').value.trim()||'الأدنى',document.getElementById('mq-sl1').value.trim()||'الأعلى'];
+  }
+  var db=getDB();
+  var idx=parseInt(document.getElementById('mq-idx').value);
+  if(idx>=0){db.banks[currentBankId].questions[idx]=q;}
+  else{db.banks[currentBankId].questions.push(q);}
+  setDB(db);
+  closeModal('modal-q');
+  renderBankEditor(currentBankId);
+  showToast('qb-toast','تم حفظ السؤال','tok');
+}
+
+function deleteQuestion(idx){
+  if(!confirm('حذف هذا السؤال؟'))return;
+  var db=getDB();
+  db.banks[currentBankId].questions.splice(idx,1);
+  setDB(db);
+  renderBankEditor(currentBankId);
+}
+
+function moveQ(idx,dir){
+  var db=getDB();
+  var qs=db.banks[currentBankId].questions;
+  var ni=idx+dir;
+  if(ni<0||ni>=qs.length)return;
+  var tmp=qs[idx];qs[idx]=qs[ni];qs[ni]=tmp;
+  setDB(db);
+  renderBankEditor(currentBankId);
+}
+
+function duplicateBank(id){
+  var db=getDB();
+  var orig=db.banks[id];
+  var newId=genId();
+  db.banks[newId]={id:newId,name:'نسخة من: '+orig.name,desc:orig.desc,
+    questions:JSON.parse(JSON.stringify(orig.questions)),created:new Date().toISOString()};
+  setDB(db);
+  renderBanksList();
+  showToast('qb-toast','تم نسخ البنك','tok');
+}
+
+function deleteBank(id){
+  if(!confirm('حذف هذا البنك نهائياً؟'))return;
+  var db=getDB();
+  delete db.banks[id];
+  setDB(db);
+  renderBanksList();
+}
+
+function exportBank(id){
+  var db=getDB();
+  var b=db.banks[id];
+  var blob=new Blob([JSON.stringify(b,null,2)],{type:'application/json'});
+  var u=URL.createObjectURL(blob);var a=document.createElement('a');
+  a.href=u;a.download=b.name.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(u);
+}
+
+function exportAllBanks(){
+  var db=getDB();
+  var blob=new Blob([JSON.stringify(db.banks,null,2)],{type:'application/json'});
+  var u=URL.createObjectURL(blob);var a=document.createElement('a');
+  a.href=u;a.download='MTCIT_MBO_KPI_QBanks_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);
+}
+
+
+/* ===================== CSV / XLSX QUESTION BANK IMPORT & EXPORT ===================== */
+var QB_EXPORT_HEADERS = ['bank_name','bank_desc','question_type','section','question','option_1','option_2','option_3','option_4','correct_answer','explanation','placeholder','scale_min','scale_max'];
+
+function cleanFileName(name){return (name||'MTCIT_QBank').replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_');}
+function csvEscape(v){v=(v==null?'':String(v));return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function csvToRows(text){
+  var rows=[],row=[],cur='',q=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i],nx=text[i+1];
+    if(q){
+      if(ch==='"'&&nx==='"'){cur+='"';i++;}
+      else if(ch==='"'){q=false;}
+      else cur+=ch;
+    }else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cur);cur='';}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(ch==='\r'){}
+      else cur+=ch;
+    }
+  }
+  row.push(cur);rows.push(row);
+  return rows.filter(function(r){return r.some(function(c){return String(c).trim()!=='';});});
+}
+function rowsToObjects(rows){
+  if(!rows.length)return [];
+  var headers=rows[0].map(function(h){return String(h||'').trim().toLowerCase();});
+  return rows.slice(1).map(function(r){var o={};headers.forEach(function(h,i){o[h]=r[i]==null?'':String(r[i]).trim();});return o;});
+}
+function bankToRows(bank){
+  return (bank.questions||[]).map(function(q){
+    return {
+      bank_name:bank.name||'',bank_desc:bank.desc||'',question_type:q.t||'',section:q.s||'',question:q.q||'',
+      option_1:(q.o&&q.o[0])||'',option_2:(q.o&&q.o[1])||'',option_3:(q.o&&q.o[2])||'',option_4:(q.o&&q.o[3])||'',
+      correct_answer:q.t==='m'?(Number(q.a)+1):'',explanation:q.e||'',placeholder:q.ph||'',
+      scale_min:(q.sl&&q.sl[0])||'',scale_max:(q.sl&&q.sl[1])||''
+    };
+  });
+}
+function allBanksToRows(){
+  var db=getDB(), rows=[];
+  Object.values(db.banks||{}).forEach(function(b){rows=rows.concat(bankToRows(b));});
+  return rows;
+}
+function rowsToCSV(rows){
+  var lines=[QB_EXPORT_HEADERS.map(csvEscape).join(',')];
+  rows.forEach(function(r){lines.push(QB_EXPORT_HEADERS.map(function(h){return csvEscape(r[h]);}).join(','));});
+  return '\ufeff'+lines.join('\n');
+}
+function downloadBlob(content,type,filename){
+  var blob=new Blob([content],{type:type});
+  var u=URL.createObjectURL(blob);var a=document.createElement('a');
+  a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);
+}
+function exportBankCSV(id){
+  var b=getDB().banks[id]; if(!b)return;
+  downloadBlob(rowsToCSV(bankToRows(b)),'text/csv;charset=utf-8',cleanFileName(b.name)+'.csv');
+}
+function exportAllBanksCSV(){
+  downloadBlob(rowsToCSV(allBanksToRows()),'text/csv;charset=utf-8','MTCIT_MBO_KPI_QBanks_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+function exportRowsXLSX(rows,filename){
+  if(typeof XLSX==='undefined'){showToast('qb-toast','تعذر تحميل مكتبة XLSX. استخدم CSV أو اتصل بالإنترنت.','ter');return;}
+  var ws=XLSX.utils.json_to_sheet(rows,{header:QB_EXPORT_HEADERS});
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Questions');
+  XLSX.writeFile(wb,filename);
+}
+function exportBankXLSX(id){
+  var b=getDB().banks[id]; if(!b)return;
+  exportRowsXLSX(bankToRows(b),cleanFileName(b.name)+'.xlsx');
+}
+function exportAllBanksXLSX(){
+  exportRowsXLSX(allBanksToRows(),'MTCIT_MBO_KPI_QBanks_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function downloadQuestionsTemplate(fmt){
+  var sample=[{bank_name:'الإدارة بالأهداف ومؤشرات الأداء — نموذج',bank_desc:'وصف مختصر للبنك',question_type:'m',section:'أسس Agile',question:'اكتب السؤال هنا',option_1:'الخيار الأول',option_2:'الخيار الثاني',option_3:'الخيار الثالث',option_4:'الخيار الرابع',correct_answer:'1',explanation:'شرح الإجابة الصحيحة',placeholder:'',scale_min:'',scale_max:''},
+  {bank_name:'الإدارة بالأهداف ومؤشرات الأداء — نموذج',bank_desc:'وصف مختصر للبنك',question_type:'open',section:'التطبيق',question:'سؤال مفتوح هنا',option_1:'',option_2:'',option_3:'',option_4:'',correct_answer:'',explanation:'',placeholder:'اكتب إجابتك هنا...',scale_min:'',scale_max:''},
+  {bank_name:'الإدارة بالأهداف ومؤشرات الأداء — نموذج',bank_desc:'وصف مختصر للبنك',question_type:'scale',section:'التقييم الذاتي',question:'مستوى ثقتك من 1 إلى 5؟',option_1:'',option_2:'',option_3:'',option_4:'',correct_answer:'',explanation:'',placeholder:'',scale_min:'لا ثقة إطلاقاً',scale_max:'ثقة كاملة'}];
+  if(fmt==='xlsx')exportRowsXLSX(sample,'MTCIT_MBO_KPI_QBank_Template.xlsx');
+  else downloadBlob(rowsToCSV(sample),'text/csv;charset=utf-8','MTCIT_MBO_KPI_QBank_Template.csv');
+}
+function normalizeQType(v){
+  v=String(v||'').trim().toLowerCase();
+  if(['m','mcq','multiple','multiple choice','موضوعي','اختيار من متعدد'].indexOf(v)>=0)return 'm';
+  if(['open','text','essay','مفتوح','نصي'].indexOf(v)>=0)return 'open';
+  if(['scale','rating','مقياس','تقييم'].indexOf(v)>=0)return 'scale';
+  return 'm';
+}
+function objectsToBanks(objs){
+  var grouped={};
+  objs.forEach(function(r){
+    var name=(r.bank_name||r.bank||r['اسم البنك']||'بنك أسئلة مستورد').trim();
+    if(!grouped[name])grouped[name]={name:name,desc:r.bank_desc||'',questions:[]};
+    var t=normalizeQType(r.question_type||r.type||r['نوع السؤال']);
+    var qtext=r.question||r.q||r['السؤال']||r['نص السؤال'];
+    if(!qtext)return;
+    var q={t:t,s:r.section||r.s||r['المحور']||'',q:qtext};
+    if(t==='m'){
+      q.o=[r.option_1,r.option_2,r.option_3,r.option_4].filter(function(x){return x!=null&&String(x).trim()!=='';});
+      var ans=String(r.correct_answer||r.answer||r['الإجابة الصحيحة']||'').trim();
+      var ai=parseInt(ans,10);
+      if(!isNaN(ai)) q.a=Math.max(0,Math.min(q.o.length-1,ai-1));
+      else q.a=Math.max(0,q.o.indexOf(ans));
+      q.e=r.explanation||r.e||r['الشرح']||'';
+      if(q.o.length<2)return;
+    } else if(t==='open') q.ph=r.placeholder||r.ph||'اكتب إجابتك هنا...';
+    else if(t==='scale') q.sl=[r.scale_min||'الأدنى',r.scale_max||'الأعلى'];
+    grouped[name].questions.push(q);
+  });
+  return Object.values(grouped).filter(function(b){return b.questions.length;});
+}
+function saveImportedBanks(banks){
+  var db=getDB(); if(!db.banks)db.banks={};
+  banks.forEach(function(b){var id=genId(); db.banks[id]={id:id,name:b.name,desc:b.desc||'',questions:b.questions,imported:new Date().toISOString()};});
+  setDB(db); renderBanksList(); populateBankSelect();
+  showToast('qb-toast','تم استيراد '+banks.length+' بنك أسئلة بنجاح','tok');
+}
+function importStructuredRows(rows){
+  var banks=objectsToBanks(rowsToObjects(rows));
+  if(!banks.length){showToast('qb-toast','لم يتم العثور على أسئلة صالحة في الملف.','ter');return;}
+  saveImportedBanks(banks);
+}
+
+function importBank(){
+  var f=document.getElementById('qb-import-file').files[0];
+  if(!f)return;
+  var name=f.name.toLowerCase();
+  if(name.endsWith('.csv')){
+    var rCsv=new FileReader();
+    rCsv.onload=function(e){try{importStructuredRows(csvToRows(e.target.result));}catch(err){showToast('qb-toast','خطأ في قراءة ملف CSV','ter');}};
+    rCsv.readAsText(f,'UTF-8');
+    return;
+  }
+  if(name.endsWith('.xlsx')||name.endsWith('.xls')){
+    if(typeof XLSX==='undefined'){showToast('qb-toast','تعذر تحميل مكتبة XLSX. استخدم CSV أو اتصل بالإنترنت.','ter');return;}
+    var rX=new FileReader();
+    rX.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        importStructuredRows(rows);
+      }catch(err){showToast('qb-toast','خطأ في قراءة ملف XLSX','ter');}
+    };
+    rX.readAsArrayBuffer(f);
+    return;
+  }
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      var db=getDB();
+      if(!db.banks)db.banks={};
+      if(data.id&&data.name&&data.questions){
+        var id=genId();
+        data.id=id;data.imported=new Date().toISOString();
+        db.banks[id]=data;
+        setDB(db);
+        renderBanksList(); populateBankSelect();
+        showToast('qb-toast','تم استيراد البنك: '+data.name,'tok');
+      } else if(typeof data==='object'&&!data.id){
+        var count=0;
+        for(var k in data){if(data[k].questions){var bid=genId();data[k].id=bid;db.banks[bid]=data[k];count++;}}
+        setDB(db);renderBanksList();populateBankSelect();
+        showToast('qb-toast','تم استيراد '+count+' بنك','tok');
+      }
+    }catch(err){showToast('qb-toast','خطأ في قراءة الملف','ter');}
+  };
+  reader.readAsText(f);
+}
+
+/* ===================== POPULATE BANK SELECT ===================== */
+function populateBankSelect(){
+  var db=getDB();
+  var sel=document.getElementById('a-qbank');
+  var cur=sel.value;
+  sel.innerHTML='<option value="">— اختر بنك الأسئلة —</option>';
+  Object.values(db.banks||{}).forEach(function(b){
+    var opt=document.createElement('option');
+    opt.value=b.id;opt.textContent=b.name+' ('+b.questions.length+' سؤال)';
+    if(b.id===cur)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.onchange=function(){
+    var id=sel.value;
+    if(!id){hide('a-qbank-preview');return;}
+    var bank=db.banks[id];
+    document.getElementById('a-qbank-info').textContent=bank.name+' — '+bank.questions.length+' سؤال '+(bank.desc?'· '+bank.desc:'');
+    show('a-qbank-preview');
+  };
+  if(cur&&db.banks[cur]){
+    var bk=db.banks[cur];
+    document.getElementById('a-qbank-info').textContent=bk.name+' — '+bk.questions.length+' سؤال';
+    show('a-qbank-preview');
+  }
+}
+
+/* ===================== ADMIN ===================== */
+function createSession(){
+  var batch=document.getElementById('a-batch').value.trim();
+  var trainer=document.getElementById('a-trainer').value.trim();
+  var bankId=document.getElementById('a-qbank').value;
+  if(!batch||!trainer){showToast('adm-toast','اسم الدورة واسم المدرب مطلوبان.','ter');return;}
+  if(!bankId){showToast('adm-toast','اختر بنك الأسئلة أولاً.','ter');return;}
+  var db=getDB();
+  var bank=db.banks[bankId];
+  if(!bank){showToast('adm-toast','البنك المختار غير موجود.','ter');return;}
+  var code=genCode();
+  var sess={code:code,batch:batch,trainer:trainer,bankId:bankId,bankName:bank.name,
+    start:document.getElementById('a-start').value.trim()||new Date().toISOString().slice(0,10),
+    deadline:document.getElementById('a-deadline').value.trim(),
+    created:new Date().toISOString()};
+  db.sessions[code]=sess;
+  db.records[code]=[];
+  setDB(db);
+  currentCode=code;
+  renderAdmPanel(code,sess,[]);
+  showToast('adm-toast','تم إنشاء الجلسة — رمز المشاركة: '+code,'tok');
+  setStatus('جلسة نشطة: '+code,'#28A745');
+  document.getElementById('a-batch').value='';
+  document.getElementById('a-trainer').value='';
+  document.getElementById('a-qbank').value='';
+  hide('a-qbank-preview');
+}
+
+function loadSession(){
+  var code=(document.getElementById('a-code').value.trim().toUpperCase()||currentCode||'');
+  if(!code||code.length!==6){showToast('adm-toast','أدخل رمزاً من 6 أحرف.','ter');return;}
+  var db=getDB();
+  var sess=db.sessions&&db.sessions[code];
+  if(!sess){showToast('adm-toast','الجلسة غير موجودة.','ter');setStatus('غير موجود','#DC3545');return;}
+  var recs=(db.records&&db.records[code])||[];
+  currentCode=code;
+  renderAdmPanel(code,sess,recs);
+  showToast('adm-toast','تم التحميل — '+recs.length+' متدرب','tok');
+  setStatus('تم التحميل','#28A745');
+}
+
+function renderAdmPanel(code,sess,recs){
+  show('adm-panel');
+  document.getElementById('adm-banner').innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">'
+    +'<div style="font-size:28px;font-weight:800;color:#003087;letter-spacing:6px;background:#fff;padding:8px 16px;border-radius:10px;border:2px solid #003087">'+code+'</div>'
+    +'<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#003087">'+sess.batch+'</div>'
+    +'<div style="font-size:12px;color:#555">المدرب: '+(sess.trainer||'—')+' · '+sess.start+(sess.deadline?' — '+sess.deadline:'')+'</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:2px"><i class="ti ti-books" style="font-size:12px"></i> بنك الأسئلة: '+(sess.bankName||'—')+'</div></div>'
+    +'<button class="bs" onclick="copyCode(\''+code+'\')"><i class="ti ti-copy"></i> نسخ الرمز</button></div>';
+
+  var evals=recs.filter(function(r){return r.eval;});
+  var gaps=recs.filter(function(r){return r.gap!=null;}).map(function(r){return r.gap;});
+  var avgGap=gaps.length?Math.round(gaps.reduce(function(a,b){return a+b;},0)/gaps.length):null;
+  var avgEval=evals.length?(Math.round(avg(evals.map(function(r){return r.eval.course_overall||0;}))*10)/10):null;
+
+  document.getElementById('k-tot').textContent=recs.length;
+  document.getElementById('k-pre').textContent=recs.filter(function(r){return r.pre;}).length;
+  document.getElementById('k-post').textContent=recs.filter(function(r){return r.post;}).length;
+  document.getElementById('k-gap').textContent=avgGap!==null?avgGap+' نقطة':'—';
+  document.getElementById('k-eval').textContent=avgEval!==null?avgEval+'/5':'—';
+  renderEvalSummary(evals);
+  var tblHdr=document.getElementById('tbl-hdr');
+  if(tblHdr) tblHdr.textContent='المتدربون ('+recs.length+')';
+  renderTable(recs);
+}
+
+function renderEvalSummary(evals){
+  var div=document.getElementById('eval-summary');
+  if(!evals.length){div.innerHTML='<div style="text-align:center;padding:16px;color:#888;font-size:13px">لا تقييمات بعد</div>';return;}
+  var ac=avg(evals.map(function(r){return r.eval.course_overall||0;}));
+  var atk=avg(evals.map(function(r){return r.eval.trainer_knowledge||0;}));
+  var atd=avg(evals.map(function(r){return r.eval.trainer_delivery||0;}));
+  var ati=avg(evals.map(function(r){return r.eval.trainer_interaction||0;}));
+  var acon=avg(evals.map(function(r){return r.eval.content_quality||0;}));
+  var ape=avg(evals.map(function(r){return r.eval.practical_exercises||0;}));
+  var arl=avg(evals.map(function(r){return r.eval.relevance_to_work||0;}));
+  var atm=avg(evals.map(function(r){return r.eval.time_management||0;}));
+  var rec_yes=evals.filter(function(r){return r.eval.recommend==='yes';}).length;
+  var avgT=(atk+atd+ati)/3;
+  var improvements=evals.filter(function(r){return r.eval.improvement&&r.eval.improvement.trim();}).map(function(r){return '"'+r.eval.improvement.trim()+'"';});
+  var bests=evals.filter(function(r){return r.eval.best_part&&r.eval.best_part.trim();}).map(function(r){return '"'+r.eval.best_part.trim()+'"';});
+  var bars=[['كفاءة المدرب',atk,'#003087'],['أسلوب التقديم',atd,'#0F6E56'],['التفاعل',ati,'#C0A500'],['جودة المحتوى',acon,'#534AB7'],['التطبيق العملي',ape,'#A32D2D'],['الصلة بالعمل',arl,'#1D9E75'],['إدارة الوقت',atm,'#888']];
+  var barsHtml=bars.map(function(b){return '<div class="ebarrow"><span style="font-size:13px;min-width:130px">'+b[0]+'</span><div style="flex:1;background:#E0E8F0;border-radius:3px;height:8px;overflow:hidden;margin:0 10px"><div style="width:'+(b[1]/5*100)+'%;height:100%;background:'+b[2]+';border-radius:3px"></div></div><span style="font-size:12px;font-weight:700;min-width:36px;text-align:left;color:#003087">'+b[1].toFixed(1)+'</span></div>';}).join('');
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
+    +'<div style="background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:12px;color:#888;margin-bottom:4px">التقييم العام</div><div style="font-size:30px;font-weight:800;color:#003087">'+ac.toFixed(1)+'<span style="font-size:15px;color:#888">/5</span></div><div style="font-size:18px;margin-top:3px">'+stars(Math.round(ac))+'</div><div style="font-size:12px;color:#888;margin-top:4px">'+evals.length+' تقييم</div></div>'
+    +'<div style="background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:12px;color:#888;margin-bottom:4px">تقييم المدرب</div><div style="font-size:30px;font-weight:800;color:#003087">'+avgT.toFixed(1)+'<span style="font-size:15px;color:#888">/5</span></div><div style="font-size:18px;margin-top:3px">'+stars(Math.round(avgT))+'</div><div style="font-size:12px;color:#888;margin-top:4px">متوسط 3 محاور</div></div></div>'
+    +barsHtml
+    +'<div style="padding:10px 0;border-top:1px solid #E0E8F0;margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px">يوصون بالدورة</span><span class="bdg b1">'+rec_yes+' من '+evals.length+' ('+Math.round(rec_yes/evals.length*100)+'%)</span></div>';
+  if(bests.length)html+='<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;color:#003087;margin-bottom:6px">أفضل جوانب الدورة</div>'+bests.slice(0,4).map(function(t){return '<div style="font-size:12px;color:#555;padding:5px 0;border-bottom:1px solid #F0F4FA">'+t+'</div>';}).join('')+'</div>';
+  if(improvements.length)html+='<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;color:#003087;margin-bottom:6px">مقترحات التحسين</div>'+improvements.slice(0,4).map(function(t){return '<div style="font-size:12px;color:#555;padding:5px 0;border-bottom:1px solid #F0F4FA">'+t+'</div>';}).join('')+'</div>';
+  div.innerHTML=html;
+}
+
+function safeTxt(v){return (v==null||v==='')?'—':String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function renderTable(recs){
+  var tbody=document.getElementById('adm-tbody');
+  if(!tbody)return;
+  if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
+  tbody.innerHTML=recs.map(function(r){
+    r=r||{};
+    var pre=(r.pre&&r.pre.total!=null)?r.pre.total+'%':'—';
+    var post=(r.post&&r.post.total!=null)?r.post.total+'%':'—';
+    var gap=r.gap!=null?(r.gap>=0?'+':'')+r.gap+' نقطة':'—';
+    var gb=r.gap==null?'b2':r.gap>=20?'b1':r.gap>=10?'b2':r.gap>=0?'b3':'b4';
+    var ce=r.eval&&r.eval.course_overall?stars(r.eval.course_overall):'—';
+    var te=r.eval&&r.eval.trainer_knowledge?stars(r.eval.trainer_knowledge):'—';
+    var st=r.eval?'<span class="bdg b1">مكتمل &#10003;</span>':r.post?'<span class="bdg b5">بعد &#10003;</span>':r.pre?'<span class="bdg b3">قبل &#10003;</span>':'<span class="bdg b4">لم يبدأ</span>';
+    var d='—';
+    if(r.lastUpdate){var dt=new Date(r.lastUpdate);d=isNaN(dt.getTime())?'—':dt.toLocaleDateString('ar-OM');}
+    var name=safeTxt(r.name);
+    var eid=safeTxt(r.eid);
+    var dept=safeTxt(r.dept).replace('دائرة ','');
+    return '<tr><td title="'+name+'">'+name+'</td><td title="'+eid+'" style="font-weight:600;color:#003087">'+eid+'</td><td>'+dept+'</td><td>'+pre+'</td><td>'+post+'</td><td><span class="bdg '+gb+'">'+gap+'</span></td><td>'+ce+'</td><td>'+te+'</td><td>'+st+'</td><td style="font-size:11px;color:#888">'+d+'</td></tr>';
+  }).join('');
+}
+
+function copyCode(c){navigator.clipboard.writeText(c).then(function(){showToast('adm-toast','تم نسخ الرمز: '+c,'tin');}).catch(function(){showToast('adm-toast','الرمز: '+c,'tin');});}
+
+/* ===================== TRAINEE ===================== */
+function trJoin(){
+  var code=document.getElementById('tr-code').value.trim().toUpperCase();
+  var eid=document.getElementById('tr-eid-l').value.trim();
+  if(code.length!==6){showToast('tr-toast','أدخل رمزاً من 6 أحرف.','ter');return;}
+  var db=getDB();
+  var sess=db.sessions&&db.sessions[code];
+  if(!sess){showToast('tr-toast','الرمز غير صحيح. تواصل مع المشرف.','ter');return;}
+  var bank=db.banks&&db.banks[sess.bankId];
+  if(!bank){showToast('tr-toast','بنك الأسئلة غير موجود. تواصل مع المشرف.','ter');return;}
+  tr.code=code;tr.qs=bank.questions;
+  var recs=(db.records&&db.records[code])||[];
+  if(eid){
+    var rec=null;
+    for(var i=0;i<recs.length;i++){if(recs[i].eid===eid||recs[i].eid.toLowerCase()===eid.toLowerCase()){rec=recs[i];break;}}
+    if(rec){tr.rec=rec;hide('tr-s1');showResume(code,sess,rec);return;}
+    else{showToast('tr-toast','الرقم الوظيفي غير موجود — سجّل بياناتك.','tin');document.getElementById('tr-eid').value=eid;}
+  }
+  hide('tr-s1');
+  document.getElementById('tr-sess-banner').innerHTML='<div style="display:flex;align-items:center;gap:10px"><i class="ti ti-circle-check" style="font-size:18px;color:#003087"></i><div><div style="font-size:13px;font-weight:700;color:#003087">'+sess.batch+'</div><div style="font-size:12px;color:#555">المدرب: '+(sess.trainer||'—')+' · بنك: '+bank.name+'</div></div></div>';
+  show('tr-s2');
+}
+
+function trRegister(){
+  var name=document.getElementById('tr-name').value.trim();
+  var dept=document.getElementById('tr-dept').value;
+  var eid=document.getElementById('tr-eid').value.trim();
+  if(!name||!dept){showToast('tr-toast','الاسم والإدارة مطلوبان.','ter');return;}
+  var db=getDB();var code=tr.code;
+  if(!db.records[code])db.records[code]=[];
+  var existing=null;
+  for(var i=0;i<db.records[code].length;i++){if(db.records[code][i].eid===eid||db.records[code][i].name===name){existing=db.records[code][i];break;}}
+  var rec=existing||{id:Date.now(),name:name,eid:eid,dept:dept,title:document.getElementById('tr-title').value.trim(),pre:null,post:null,gap:null,eval:null,lastUpdate:new Date().toISOString()};
+  if(!existing){db.records[code].push(rec);setDB(db);}
+  tr.rec=rec;hide('tr-s2');startMode('pre');
+}
+
+function showResume(code,sess,rec){
+  var ini=rec.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  document.getElementById('resume-banner').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:50%;background:#003087;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">'+ini+'</div><div><div style="font-size:14px;font-weight:700;color:#003087">'+rec.name+'</div><div style="font-size:12px;color:#555">'+rec.dept+' · '+sess.batch+'</div></div><div style="margin-right:auto;font-size:12px;color:#888">رمز: <strong>'+code+'</strong></div></div>';
+  var hasPre=rec.pre!=null,hasPost=rec.post!=null,hasEval=rec.eval!=null;
+  if(hasPre){document.getElementById('si-pre').style.background='#EAF5EE';document.getElementById('si-pre').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-pre').textContent='الدرجة: '+rec.pre.total+'%';document.getElementById('bdg-pre').className='bdg b1';document.getElementById('bdg-pre').textContent='مكتمل &#10003;';document.getElementById('sr-pre').style.background='#F0FAF4';}
+  else{document.getElementById('si-pre').style.background='#003087';document.getElementById('si-pre').innerHTML='<i class="ti ti-player-play" style="color:#fff"></i>';document.getElementById('sub-pre').textContent='لم تبدأ بعد';document.getElementById('bdg-pre').className='bdg b3';document.getElementById('bdg-pre').textContent='لم يبدأ';}
+  if(hasPost){document.getElementById('si-post').style.background='#EAF5EE';document.getElementById('si-post').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-post').textContent='الدرجة: '+rec.post.total+'% · فجوة: '+(rec.gap>=0?'+':'')+rec.gap+' نقطة';document.getElementById('bdg-post').className='bdg b1';document.getElementById('bdg-post').textContent='مكتمل &#10003;';document.getElementById('sr-post').style.background='#F0FAF4';}
+  else if(hasPre){document.getElementById('si-post').style.background='#003087';document.getElementById('si-post').innerHTML='<i class="ti ti-player-play" style="color:#fff"></i>';document.getElementById('sub-post').textContent='جاهز للبدء';document.getElementById('bdg-post').className='bdg b2';document.getElementById('bdg-post').textContent='جاهز الآن';document.getElementById('sr-post').style.border='2px solid #003087';}
+  if(hasEval){document.getElementById('si-eval').style.background='#EAF5EE';document.getElementById('si-eval').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-eval').textContent='اكتمل &#10003;';document.getElementById('bdg-eval').className='bdg b1';document.getElementById('bdg-eval').textContent='مكتمل &#10003;';document.getElementById('sr-eval').style.background='#F0FAF4';}
+  else if(hasPost){document.getElementById('si-eval').style.background='#534AB7';document.getElementById('si-eval').innerHTML='<i class="ti ti-star" style="color:#fff"></i>';document.getElementById('sub-eval').textContent='جاهز — شارك رأيك';document.getElementById('bdg-eval').className='bdg b6';document.getElementById('bdg-eval').textContent='جاهز الآن';document.getElementById('sr-eval').style.border='2px solid #534AB7';}
+  var area=document.getElementById('resume-btns');
+  if(!hasPre){area.innerHTML='<button class="bp bp-full" onclick="resumeStart(\'pre\')"><i class="ti ti-player-play"></i> ابدأ اختبار قبل الورشة الآن</button>';}
+  else if(!hasPost){area.innerHTML='<button class="bp bpg bp-full" onclick="resumeStart(\'post\')"><i class="ti ti-player-play"></i> ابدأ اختبار بعد الورشة الآن</button><div style="background:#EAF1FB;border-radius:8px;padding:10px 13px;font-size:12px;color:#003087;border:1px solid #B5D4F4"><i class="ti ti-info-circle"></i> يُجرى بعد انتهاء الورشة فعلياً.</div>';}
+  else if(!hasEval){area.innerHTML='<button class="bp bpp bp-full" onclick="resumeStart(\'eval\')"><i class="ti ti-star"></i> ابدأ تقييم الدورة والمدرب الآن</button><div style="background:#F0EEFF;border-radius:8px;padding:10px 13px;font-size:12px;color:#3E379A;border:1px solid #C4B8F4"><i class="ti ti-clock"></i> يستغرق 3-5 دقائق فقط.</div>';}
+  else{area.innerHTML='<div style="background:#EAF5EE;border:1px solid #A8D8B8;border-radius:12px;padding:20px;text-align:center"><i class="ti ti-trophy" style="font-size:32px;color:#1D6F42;display:block;margin-bottom:8px"></i><div style="font-size:15px;font-weight:700;color:#155724;margin-bottom:4px">أكملت جميع المراحل!</div><div style="font-size:12px;color:#0A5240;margin-bottom:14px">شكراً '+rec.name+'</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div style="background:#fff;border-radius:8px;padding:10px"><div style="font-size:18px;font-weight:700;color:#003087">'+rec.pre.total+'%</div><div style="font-size:11px;color:#888">قبل</div></div><div style="background:#fff;border-radius:8px;padding:10px"><div style="font-size:18px;font-weight:700;color:#003087">'+rec.post.total+'%</div><div style="font-size:11px;color:#888">بعد</div></div><div style="background:#fff;border-radius:8px;padding:10px"><div style="font-size:18px;font-weight:700;color:'+(rec.gap>=0?'#1D6F42':'#A32D2D')+'">'+(rec.gap>=0?'+':'')+rec.gap+' نقطة</div><div style="font-size:11px;color:#888">الفجوة</div></div></div></div>';}
+  show('tr-s3');
+}
+
+function resumeStart(mode){hide('tr-s3');if(mode==='eval'){showEval();return;}startMode(mode);}
+
+function startMode(mode){
+  tr.mode=mode;tr.idx=0;tr.ans=new Array(tr.qs.length).fill(null);tr.rev=new Array(tr.qs.length).fill(false);
+  document.getElementById('tr-res').style.display='none';
+  document.getElementById('tr-qa').style.display='block';
+  document.getElementById('tr-nav').style.display='flex';
+  var ini=tr.rec.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  var ml=mode==='pre'?'اختبار قبل الورشة':'اختبار بعد الورشة';
+  var mc=mode==='pre'?'b2':'b1';
+  document.getElementById('tr-profbar').innerHTML='<div class="ava">'+ini+'</div><div><div style="font-size:13px;font-weight:700;color:#003087">'+tr.rec.name+'</div><div style="font-size:12px;color:#555">'+tr.rec.dept+'</div></div><div style="margin-right:auto"><span class="bdg '+mc+'">'+ml+'</span></div>';
+  document.getElementById('tr-pb').style.background=mode==='pre'?'#003087':'#0F6E56';
+  document.getElementById('ps1').className='ps'+(mode==='pre'?' active':' done');
+  document.getElementById('ps2').className='ps'+(mode==='post'?' active':'');
+  document.getElementById('ps3').className='ps';
+  show('tr-s4');renderQ();
+}
+
+function renderQ(){
+  var idx=tr.idx,q=tr.qs[idx],total=tr.qs.length;
+  document.getElementById('tr-ql').textContent='السؤال '+(idx+1)+' من '+total;
+  document.getElementById('tr-qs').textContent=q.s||'';
+  document.getElementById('tr-pb').style.width=Math.round((idx+1)/total*100)+'%';
+  document.getElementById('tr-back').style.display=idx>0?'block':'none';
+  document.getElementById('tr-fwd').innerHTML=idx===total-1?'إنهاء وحفظ <i class="ti ti-check"></i>':'التالي <i class="ti ti-arrow-left"></i>';
+  var L=['أ','ب','ج','د'];
+  var tag=tr.mode==='pre'?'<span class="bdg b2">قبل الورشة</span>':'<span class="bdg b1">بعد الورشة</span>';
+  var h='<div class="qcard"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+tag+(q.s?'<span style="font-size:12px;color:#888">'+q.s+'</span>':'')+'<span style="font-size:11px;font-weight:700;color:#888;margin-right:auto">س'+(idx+1)+'</span></div><div class="qtxt">'+q.q+'</div>';
+  if(q.t==='m'){
+    h+='<div class="opts">';
+    var opts=q.o||[];
+    for(var i=0;i<opts.length;i++){
+      var cls='opt';
+      if(tr.rev[idx]){if(i===q.a)cls+=' ok';else if(tr.ans[idx]===i&&i!==q.a)cls+=' ng';}
+      else if(tr.ans[idx]===i)cls+=' sel';
+      h+='<div class="'+cls+'" onclick="pick('+i+')"><span class="ol">'+L[i]+'</span><span class="ot">'+opts[i]+'</span></div>';
+    }
+    h+='</div>';
+    if(tr.rev[idx]){var ok=tr.ans[idx]===q.a;h+='<div class="fb '+(ok?'fbok':'fbng')+'"><strong>'+(ok?'&#10003; صحيح':'&#10007; الإجابة الصحيحة: '+(q.o?q.o[q.a]:''))+'</strong>'+(q.e?'<br>'+q.e:'')+'</div>';}
+  } else if(q.t==='open'){
+    h+='<textarea class="ota" id="tr-open" placeholder="'+(q.ph||'اكتب هنا...')+'" oninput="tr.ans[tr.idx]=this.value">'+(tr.ans[idx]||'')+'</textarea>';
+    h+='<div class="fb fbok" style="margin-top:0"><i class="ti ti-pencil"></i> سؤال تطبيقي — ستُقيَّم من المشرف.</div>';
+  } else if(q.t==='scale'){
+    h+='<div class="scrow">';
+    for(var j=1;j<=5;j++)h+='<button class="scb'+(tr.ans[idx]===j?' on':'')+'" onclick="trScale('+j+')">'+j+'</button>';
+    h+='</div><div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-top:5px"><span>'+(q.sl?q.sl[0]:'الأدنى')+'</span><span>'+(q.sl?q.sl[1]:'الأعلى')+'</span></div>';
+  }
+  h+='</div>';
+  document.getElementById('tr-qa').innerHTML=h;
+}
+
+function pick(i){if(tr.rev[tr.idx])return;tr.ans[tr.idx]=i;tr.rev[tr.idx]=true;renderQ();}
+function trScale(i){tr.ans[tr.idx]=i;renderQ();}
+
+function trNav(dir){
+  if(dir===1&&tr.idx===tr.qs.length-1){finishTest();return;}
+  tr.idx=Math.max(0,Math.min(tr.qs.length-1,tr.idx+dir));renderQ();
+}
+
+function calcScore(){
+  var mcqs=tr.qs.filter(function(q){return q.t==='m';});
+  var c=0;mcqs.forEach(function(q){if(tr.ans[tr.qs.indexOf(q)]===q.a)c++;});
+  var secList=[...new Set(mcqs.map(function(q){return q.s;}))];
+  var ss={};
+  secList.forEach(function(s){
+    var sq=mcqs.filter(function(q){return q.s===s;});
+    var sc=sq.filter(function(q){return tr.ans[tr.qs.indexOf(q)]===q.a;}).length;
+    ss[s]=sq.length?Math.round(sc/sq.length*100):0;
+  });
+  var si=tr.qs.findIndex(function(q){return q.t==='scale';});
+  var oi=tr.qs.findIndex(function(q){return q.t==='open';});
+  return{total:mcqs.length?Math.round(c/mcqs.length*100):0,correct:c,total_q:mcqs.length,secScores:ss,confidence:si>=0?tr.ans[si]:null,open_answer:oi>=0?(tr.ans[oi]||''):''};
+}
+
+function finishTest(){
+  var sc=calcScore();
+  var rec=tr.rec,code=tr.code,mode=tr.mode;
+  if(mode==='pre')rec.pre=sc;
+  else{rec.post=sc;if(rec.pre)rec.gap=sc.total-rec.pre.total;}
+  rec.lastUpdate=new Date().toISOString();
+  var db=getDB();
+  if(!db.records[code])db.records[code]=[];
+  var idx=db.records[code].findIndex(function(r){return r.id===rec.id;});
+  if(idx>=0)db.records[code][idx]=rec;else db.records[code].push(rec);
+  setDB(db);
+  document.getElementById('tr-qa').style.display='none';
+  document.getElementById('tr-nav').style.display='none';
+  var rDiv=document.getElementById('tr-res');rDiv.style.display='block';
+  var g=sc.total>=85?['ممتاز','#155724','#D4EDDA']:sc.total>=70?['جيد جداً','#003087','#D0E4FB']:sc.total>=50?['يحتاج تعزيز','#856404','#FFF3CD']:['يحتاج مراجعة','#721C24','#F8D7DA'];
+  var secList=Object.keys(sc.secScores);
+  var sr=secList.map(function(s){var v=sc.secScores[s]||0,cl=v>=75?'#1D6F42':v>=50?'#C0A500':'#A32D2D';return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F0F4FA"><span style="font-size:13px;min-width:130px">'+s+'</span><div style="flex:1;background:#E0E8F0;border-radius:3px;height:7px;overflow:hidden"><div style="width:'+v+'%;height:100%;background:'+cl+';border-radius:3px"></div></div><span style="font-size:13px;font-weight:700;min-width:38px;text-align:left;color:#003087">'+v+'%</span></div>';}).join('');
+  var ml=mode==='pre'?'قبل الورشة':'بعد الورشة';
+  var html='<div style="background:#F8FAFD;border:1px solid #E0E8F0;border-radius:14px;padding:20px;text-align:center;margin-bottom:14px"><div style="font-size:52px;font-weight:800;color:#003087">'+sc.total+'%</div><div style="font-size:13px;color:#888;margin:4px 0">'+sc.correct+' من '+sc.total_q+' سؤال صحيح — '+ml+'</div><span style="font-size:13px;font-weight:700;background:'+g[2]+';color:'+g[1]+';padding:4px 16px;border-radius:6px">'+g[0]+'</span></div>'
+    +(secList.length?'<div style="background:#fff;border:1px solid #E0E8F0;border-radius:12px;padding:14px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#003087;margin-bottom:10px">الأداء حسب المحور</div>'+sr+'</div>':'');
+  if(mode==='pre'){html+='<div style="background:#D0E4FB;border-radius:10px;padding:12px 14px;font-size:13px;color:#003087;border:1px solid #B5D4F4"><i class="ti ti-calendar"></i> بعد انتهاء الورشة عُد وأدخل الرمز <strong>'+code+'</strong> ورقمك الوظيفي لأداء اختبار "بعد".</div>';}
+  else{html+='<button class="bp bpp bp-full" onclick="goEval()"><i class="ti ti-star"></i> انتقل لتقييم الدورة والمدرب &#8592;</button>';}
+  rDiv.innerHTML=html;
+}
+
+function goEval(){hide('tr-s4');showEval();}
+
+function showEval(){
+  var rec=tr.rec;
+  var ini=rec.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  document.getElementById('tr-eval-prof').innerHTML='<div class="ava">'+ini+'</div><div><div style="font-size:13px;font-weight:700;color:#003087">'+rec.name+'</div><div style="font-size:12px;color:#555">'+rec.dept+'</div></div><div style="margin-right:auto"><span class="bdg b6">تقييم الدورة</span></div>';
+  tr.ev={};
+  var form=document.getElementById('eval-form');form.innerHTML='';
+  EQS.forEach(function(eq){
+    var box=document.createElement('div');box.className='evalbox';
+    var html='<div class="etitle">'+eq.label+'</div>';
+    if(eq.sub)html+='<div class="esub">'+eq.sub+'</div>';
+    if(eq.type==='stars'){
+      html+='<div class="stars" id="st-'+eq.id+'">';
+      for(var i=1;i<=5;i++){html+='<button class="star" aria-label="'+i+' نجوم" onclick="setStar(\''+eq.id+'\','+i+')">&#9733;</button>';}
+      html+='</div>';
+    } else if(eq.type==='sc5'){
+      html+='<div class="sc5" id="sc-'+eq.id+'">';
+      eq.opts.forEach(function(o,i){html+='<button class="s5" onclick="setSc5(\''+eq.id+'\','+i+',this)">'+o+'</button>';});
+      html+='</div>';
+    } else if(eq.type==='yn'){
+      html+='<div class="ynrow" id="yn-'+eq.id+'"><button class="yn" onclick="setYn(\''+eq.id+'\',\'yes\',this)">نعم، أوصي بها</button><button class="yn" onclick="setYn(\''+eq.id+'\',\'no\',this)">لا، لا أوصي بها</button></div>';
+    } else if(eq.type==='text'){
+      html+='<textarea class="ota" style="margin-top:8px" placeholder="'+(eq.ph||'')+'" oninput="tr.ev[\''+eq.id+'\']=this.value"></textarea>';
+    }
+    box.innerHTML=html;form.appendChild(box);
+  });
+  show('tr-s5');
+}
+
+function setStar(id,v){tr.ev[id]=v;var btns=document.querySelectorAll('#st-'+id+' .star');for(var i=0;i<btns.length;i++)btns[i].classList.toggle('on',i<v);}
+function setSc5(id,i,btn){tr.ev[id]=i+1;var all=btn.parentNode.querySelectorAll('.s5');for(var j=0;j<all.length;j++)all[j].classList.toggle('on',j===i);}
+function setYn(id,v,btn){tr.ev[id]=v;var all=btn.parentNode.querySelectorAll('.yn');for(var j=0;j<all.length;j++)all[j].classList.remove('on');btn.classList.add('on');}
+
+function saveEval(){
+  if(!tr.ev.course_overall){showToast('tr-toast','يرجى تقييم الدورة بالنجوم أولاً.','ter');return;}
+  var rec=tr.rec,code=tr.code;
+  rec.eval=Object.assign({},tr.ev,{saved:new Date().toISOString()});
+  rec.lastUpdate=new Date().toISOString();
+  var db=getDB();
+  var idx=db.records[code].findIndex(function(r){return r.id===rec.id;});
+  if(idx>=0)db.records[code][idx]=rec;
+  setDB(db);
+  hide('eval-form');document.getElementById('btn-eval').style.display='none';
+  document.getElementById('eval-done').innerHTML='<div style="background:#EAF5EE;border:1px solid #A8D8B8;border-radius:14px;padding:24px;text-align:center;margin-top:8px"><i class="ti ti-trophy" style="font-size:40px;color:#1D6F42;display:block;margin-bottom:10px"></i><div style="font-size:17px;font-weight:700;color:#155724;margin-bottom:5px">شكراً '+rec.name+'!</div><div style="font-size:13px;color:#0A5240;margin-bottom:16px">تم حفظ اختبارَيك وتقييم الدورة بنجاح</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.pre?rec.pre.total+'%':'—')+'</div><div style="font-size:12px;color:#888">قبل</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.post?rec.post.total+'%':'—')+'</div><div style="font-size:12px;color:#888">بعد</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:700;color:'+(rec.gap>=0?'#1D6F42':'#A32D2D')+'">'+(rec.gap!=null?(rec.gap>=0?'+':'')+rec.gap+' نقطة':'—')+'</div><div style="font-size:12px;color:#888">الفجوة</div></div></div></div>';
+  setStatus('اكتمل التقييم &#10003;','#28A745');
+}
+
+/* ===================== EXPORT ===================== */
+function doExport(fmt){
+  if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
+  var db=getDB();var recs=(db.records&&db.records[currentCode])||[];
+  if(!recs.length){showToast('adm-toast','لا بيانات.','ter');return;}
+  var sess=db.sessions[currentCode];
+  var bank=sess&&db.banks[sess.bankId];
+  var secList=bank?[...new Set(bank.questions.filter(function(q){return q.t==='m';}).map(function(q){return q.s;}))]:[]; 
+  var hdr=['name','eid','dept','title'];
+  secList.forEach(function(s){hdr.push('pre_'+s.replace(/\s+/g,'_'));});
+  hdr=hdr.concat(['pre_total','pre_confidence','pre_open']);
+  secList.forEach(function(s){hdr.push('post_'+s.replace(/\s+/g,'_'));});
+  hdr=hdr.concat(['post_total','post_confidence','post_open','gap','eval_course','eval_trainer_k','eval_trainer_d','eval_trainer_i','eval_content','eval_practical','eval_relevance','eval_time','eval_recommend','eval_best_part','eval_improvement','lastUpdate']);
+  var rows=recs.map(function(r){
+    var pv=secList.map(function(s){return r.pre&&r.pre.secScores?r.pre.secScores[s]!=null?r.pre.secScores[s]:'':'';});
+    var pov=secList.map(function(s){return r.post&&r.post.secScores?r.post.secScores[s]!=null?r.post.secScores[s]:'':'';});
+    var e=r.eval||{};
+    var row=[r.name,r.eid,r.dept,r.title].concat(pv).concat([r.pre?r.pre.total:'',r.pre?r.pre.confidence!=null?r.pre.confidence:'':'',r.pre?r.pre.open_answer||'':'']).concat(pov).concat([r.post?r.post.total:'',r.post?r.post.confidence!=null?r.post.confidence:'':'',r.post?r.post.open_answer||'':'',r.gap!=null?r.gap:'',e.course_overall||'',e.trainer_knowledge||'',e.trainer_delivery||'',e.trainer_interaction||'',e.content_quality||'',e.practical_exercises||'',e.relevance_to_work||'',e.time_management||'',e.recommend||'',e.best_part||'',e.improvement||'',r.lastUpdate||'']);
+    return row.map(function(v){var s=String(v!=null?v:'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');
+  });
+  var csv=hdr.join(',')+'\n'+rows.join('\n');
+  if(fmt==='csv'){var b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='MTCIT_'+currentCode+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);showToast('adm-toast','تم التصدير','tok');}
+  else if(fmt==='json'){var b2=new Blob([JSON.stringify(recs,null,2)],{type:'application/json'});var u2=URL.createObjectURL(b2);var a2=document.createElement('a');a2.href=u2;a2.download='MTCIT_'+currentCode+'_'+new Date().toISOString().slice(0,10)+'.json';a2.click();URL.revokeObjectURL(u2);showToast('adm-toast','تم التصدير','tok');}
+  else{navigator.clipboard.writeText(csv).then(function(){showToast('adm-toast','تم النسخ','tok');});}
+}
+
+/* ===================== INIT ===================== */
+try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
+initDefaultBank();
+populateBankSelect();
+</script>
+</body>
+</html>
