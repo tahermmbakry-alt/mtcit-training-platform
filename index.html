@@ -121,6 +121,17 @@ tr:hover td{background:#F8FAFD}
 .priv{background:#EAF5EE;border:1px solid #A8D8B8;border-radius:8px;padding:10px 13px;font-size:12px;color:#155724;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px}
 .ebarrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F0F4FA}
 .ebarrow:last-child{border-bottom:none}
+
+/* Previous Sessions Browser */
+.session-browser-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.session-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.session-search{max-width:260px;padding:8px 10px;border-radius:8px;border:1px solid #D0DBF0;background:#F8FAFD;font-size:12px;font-family:inherit}
+.session-list{max-height:320px;overflow:auto;border:1px solid #E0E8F0;border-radius:12px;background:#fff}
+.session-list table{margin:0;min-width:780px}
+.session-code{font-weight:800;color:#003087;letter-spacing:3px;background:#EAF1FB;border-radius:6px;padding:3px 7px;display:inline-block}
+.session-row-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.session-empty{text-align:center;padding:22px;color:#888;font-size:13px;background:#FAFCFF;border:1px dashed #D0DBF0;border-radius:12px}
+.session-mini{font-size:11px;color:#777;margin-top:2px;line-height:1.5}
 /* Question Bank Editor */
 .qb-item{background:#fff;border:1px solid #E0E8F0;border-radius:10px;padding:14px;margin-bottom:10px;position:relative}
 .qb-item:hover{border-color:#B5D4F4}
@@ -140,7 +151,23 @@ tr:hover td{background:#F8FAFD}
 .opt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .opt-row input{flex:1}
 .opt-row .ans-radio{width:18px;height:18px;cursor:pointer;flex-shrink:0}
-@media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}}
+
+/* Security & Password Protection */
+.lock-screen{position:fixed;inset:0;background:linear-gradient(135deg,rgba(0,48,135,.96),rgba(10,36,80,.96));z-index:500;display:none;align-items:center;justify-content:center;padding:18px}
+.lock-screen.show{display:flex}
+.lock-card{width:100%;max-width:430px;background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.35)}
+.lock-title{font-size:18px;font-weight:900;color:#003087;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.lock-sub{font-size:12px;color:#667085;margin-bottom:16px;line-height:1.7}
+.pass-wrap{position:relative}
+.pass-wrap input{padding-left:42px}
+.eye-btn{position:absolute;left:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#667085;cursor:pointer;font-size:18px}
+.sec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.sec-note{font-size:11px;color:#6B7280;background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:10px;line-height:1.7}
+.audit-list{max-height:210px;overflow:auto;border:1px solid #E0E8F0;border-radius:12px;background:#fff}
+.audit-item{padding:8px 10px;border-bottom:1px solid #F0F4FA;font-size:12px}
+.audit-item:last-child{border-bottom:0}
+
+@media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}.sec-grid{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -152,8 +179,10 @@ tr:hover td{background:#F8FAFD}
     <div class="ts">اختبار المتدرب قبل وبعد الدورة وتقييم الدورة</div>
   </div>
   <div class="rtog">
+    <button class="rtb" id="rb-stats" onclick="setRole('stats')"><i class="ti ti-chart-infographic"></i> مؤشرات</button>
     <button class="rtb" id="rb-adm" onclick="setRole('adm')"><i class="ti ti-shield"></i> مشرف</button>
     <button class="rtb"    id="rb-qb"  onclick="setRole('qb')"><i class="ti ti-list-check"></i> الأسئلة</button>
+    <button class="rtb" id="rb-sec" onclick="setRole('sec')"><i class="ti ti-lock-cog"></i> الأمان</button>
     <button class="rtb on"    id="rb-tr"  onclick="setRole('tr')"><i class="ti ti-user"></i> متدرب</button>
   </div>
 </div>
@@ -162,6 +191,18 @@ tr:hover td{background:#F8FAFD}
   <span id="stxt">جاهز</span>
 </div>
 <div class="content">
+
+
+<div class="view" id="v-stats">
+  <div id="stats-toast" class="toast"></div>
+  <div class="sec">
+    <div class="sec-l"><i class="ti ti-chart-infographic"></i> لوحة المؤشرات التنفيذية لكافة الجلسات</div>
+    <button class="bs" onclick="renderStatsDashboard()"><i class="ti ti-refresh"></i> تحديث المؤشرات</button>
+  </div>
+  <div id="stats-dashboard" class="card cblue">
+    <div style="text-align:center;padding:24px;color:#666;font-size:13px">جاري تحميل المؤشرات...</div>
+  </div>
+</div>
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
@@ -201,6 +242,20 @@ tr:hover td{background:#F8FAFD}
     </div>
   </div>
 
+  <div class="card cblue">
+    <div class="session-browser-head">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#003087"><i class="ti ti-history"></i> استعراض بيانات كافة الجلسات السابقة</div>
+        <div class="session-mini">اختر أي جلسة من القائمة أدناه لتحميل بياناتها وسجلات المتدربين مباشرة.</div>
+      </div>
+      <div class="session-tools">
+        <input type="text" id="session-search" class="session-search" placeholder="بحث بالرمز / الدورة / المدرب" oninput="renderSessionHistory()">
+        <button class="bs" onclick="renderSessionHistory()"><i class="ti ti-refresh"></i> تحديث القائمة</button>
+      </div>
+    </div>
+    <div id="session-history-wrap" class="session-empty">جاري تحميل الجلسات السابقة...</div>
+  </div>
+
   <div id="adm-panel" style="display:none">
     <div id="adm-banner" class="card cblue"></div>
     <div class="sec"><div class="sec-l"><i class="ti ti-chart-bar"></i> ملخص الأداء الكامل</div></div>
@@ -215,7 +270,10 @@ tr:hover td{background:#F8FAFD}
     <div id="eval-summary" class="card"></div>
     <div class="sec">
       <div class="sec-l"><i class="ti ti-users"></i> سجلات المتدربين</div>
-      <button class="bs" onclick="loadSession()"><i class="ti ti-refresh"></i> تحديث</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="bs" onclick="loadSession()"><i class="ti ti-refresh"></i> تحديث</button>
+        <button class="bs" style="color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="clearCurrentSessionRecords()"><i class="ti ti-trash"></i> حذف بيانات الدورة الحالية</button>
+      </div>
     </div>
     <div class="tw"><table>
       <thead><tr>
@@ -266,6 +324,42 @@ tr:hover td{background:#F8FAFD}
         <button class="bs" onclick="downloadQuestionsTemplate('xlsx')"><i class="ti ti-file-spreadsheet"></i> قالب XLSX</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="view" id="v-sec">
+  <div id="sec-toast" class="toast"></div>
+  <div class="sec"><div class="sec-l"><i class="ti ti-lock-cog"></i> إعدادات الحماية وكلمة المرور</div></div>
+  <div class="card cblue">
+    <div class="sec-note">هذه الصفحة مخصصة لإدارة صلاحيات الدخول. يرجى تحديث بيانات الاعتماد بشكل دوري والحفاظ عليها لدى مسؤول النظام فقط.</div>
+  </div>
+  <div class="card">
+    <div class="sec"><div class="sec-l"><i class="ti ti-key"></i> تغيير كلمة مرور المشرف</div></div>
+    <div class="r2">
+      <div><div class="lbl"><span class="req">*</span>كلمة المرور الحالية</div><div class="pass-wrap"><input type="password" id="sec-old-pass" placeholder="أدخل كلمة المرور الحالية"><button class="eye-btn" onclick="togglePassField('sec-old-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+      <div><div class="lbl"><span class="req">*</span>كلمة المرور الجديدة</div><div class="pass-wrap"><input type="password" id="sec-new-pass" placeholder="يفضل 8 أحرف أو أكثر"><button class="eye-btn" onclick="togglePassField('sec-new-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+    </div>
+    <div class="r2">
+      <div><div class="lbl"><span class="req">*</span>تأكيد كلمة المرور الجديدة</div><div class="pass-wrap"><input type="password" id="sec-confirm-pass" placeholder="أعد إدخال كلمة المرور"><button class="eye-btn" onclick="togglePassField('sec-confirm-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">
+        <button class="bp" onclick="changeAdminPassword()"><i class="ti ti-device-floppy"></i> حفظ كلمة المرور الجديدة</button>
+        <button class="bs" onclick="generateStrongPassword()"><i class="ti ti-wand"></i> توليد كلمة قوية</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec"><div class="sec-l"><i class="ti ti-shield-lock"></i> سياسة القفل والحماية</div></div>
+    <div class="sec-grid">
+      <div><div class="lbl">مدة الجلسة قبل القفل التلقائي بالدقائق</div><input type="text" id="sec-timeout" placeholder="15"></div>
+      <div><div class="lbl">عدد المحاولات الخاطئة قبل الإيقاف</div><input type="text" id="sec-max-attempts" placeholder="5"></div>
+      <div><div class="lbl">مدة الإيقاف بالدقائق</div><input type="text" id="sec-lockout" placeholder="10"></div>
+      <div style="display:flex;align-items:flex-end"><button class="bp bpg bp-full" onclick="saveSecurityPolicy()"><i class="ti ti-check"></i> حفظ سياسة الحماية</button></div>
+    </div>
+    <button class="bs" onclick="lockAdminNow()"><i class="ti ti-lock"></i> قفل صفحات الإدارة الآن</button>
+  </div>
+  <div class="card">
+    <div class="sec"><div class="sec-l"><i class="ti ti-history"></i> سجل الدخول والحماية</div><button class="bs" onclick="clearAuditLog()">مسح السجل</button></div>
+    <div id="audit-log" class="audit-list"></div>
   </div>
 </div>
 
@@ -430,6 +524,21 @@ tr:hover td{background:#F8FAFD}
   </div>
 </div>
 </div></div>
+
+<div class="lock-screen" id="auth-modal">
+  <div class="lock-card">
+    <div class="lock-title"><i class="ti ti-shield-lock"></i> دخول المشرف</div>
+    <div class="lock-sub" id="auth-sub">هذه الصفحة محمية. أدخل كلمة مرور المشرف للمتابعة.</div>
+    <div class="pass-wrap" style="margin-bottom:10px">
+      <input type="password" id="auth-pass" placeholder="كلمة مرور المشرف" onkeydown="if(event.key==='Enter')submitAuthPassword()">
+      <button class="eye-btn" onclick="togglePassField('auth-pass')" type="button"><i class="ti ti-eye"></i></button>
+    </div>
+    <div id="auth-error" style="display:none;background:#F8D7DA;color:#721C24;border:1px solid #F0B4BA;border-radius:10px;padding:9px 11px;font-size:12px;margin-bottom:10px"></div>
+    <button class="bp bp-full" onclick="submitAuthPassword()"><i class="ti ti-login"></i> دخول</button>
+    <button class="bs" style="width:100%;margin-top:8px" onclick="cancelAuth()">إلغاء والعودة للمتدرب</button>
+    <div class="sec-note" style="margin-top:10px">الرجاء إدخال بيانات الدخول للوصول إلى لوحة التحكم.</div>
+  </div>
+</div>
 
 <script>
 /* ===================== DEFAULT QUESTION BANK ===================== */
@@ -703,8 +812,11 @@ var EQS = [
 var currentCode = null;
 var currentBankId = null;
 var editingBankId = null;
-var ADMIN_PASSWORD = 'MTCIT2026';
+var DEFAULT_ADMIN_HASH = '4c206a46c60e86396a84bd821a0683d3dd9698da65e6bd36391627ca0f322cf5';
+var SECURITY_KEY = 'mtcit_mbo_security_v2';
 var adminUnlocked = false;
+var pendingSecureRole = null;
+var authTimer = null;
 var tr = {code:null,rec:null,qs:[],mode:'pre',idx:0,ans:[],rev:[],ev:{}};
 
 /* ===================== CENTRAL STORAGE CONFIG =====================
@@ -775,27 +887,93 @@ function avg(a){var f=a.filter(function(x){return x!=null&&x>0;});return f.lengt
 function stars(v,max){max=max||5;var s='';for(var i=1;i<=max;i++)s+='<span style="color:'+(i<=v?'#C0A500':'#DDD')+';font-size:15px">&#9733;</span>';return s;}
 function show(id,d){var e=document.getElementById(id);if(e)e.style.display=d||'block';}
 function hide(id){var e=document.getElementById(id);if(e)e.style.display='none';}
-function setRole(r){
-  if((r==='adm'||r==='qb')&&!adminUnlocked){
-    var p=prompt('هذه الصفحة مخصصة للمشرف فقط. أدخل كلمة السر:');
-    if(p!==ADMIN_PASSWORD){
-      setStatus('تم رفض الدخول — كلمة السر غير صحيحة','#DC3545');
-      ['adm','qb','tr'].forEach(function(x){
-        document.getElementById('v-'+x).classList.toggle('on',x==='tr');
-        document.getElementById('rb-'+x).classList.toggle('on',x==='tr');
-      });
-      return;
-    }
-    adminUnlocked=true;
-    setStatus('تم فتح صلاحيات المشرف لهذه الجلسة','#28A745');
+async function setRole(r){
+  if(['stats','adm','qb','sec'].indexOf(r)>=0 && !isAdminSessionValid()){
+    pendingSecureRole=r;
+    showAuthModal(r);
+    return;
   }
-  ['adm','qb','tr'].forEach(function(x){
-    document.getElementById('v-'+x).classList.toggle('on',x===r);
-    document.getElementById('rb-'+x).classList.toggle('on',x===r);
-  });
-  if(r==='qb')renderBanksList();
-  if(r==='adm')populateBankSelect();
+  activateRole(r);
 }
+function activateRole(r){
+  adminUnlocked = ['stats','adm','qb','sec'].indexOf(r)>=0 ? true : adminUnlocked;
+  ['stats','adm','qb','sec','tr'].forEach(function(x){
+    var v=document.getElementById('v-'+x), b=document.getElementById('rb-'+x);
+    if(v)v.classList.toggle('on',x===r);
+    if(b)b.classList.toggle('on',x===r);
+  });
+  if(['stats','adm','qb','sec'].indexOf(r)>=0){touchAdminActivity();}
+  if(r==='stats')renderStatsDashboard();
+  if(r==='qb')renderBanksList();
+  if(r==='adm'){populateBankSelect();renderSessionHistory();}
+  if(r==='sec'){renderSecuritySettings();}
+}
+
+/* ===================== SECURITY ===================== */
+function defaultSecurity(){return {hash:DEFAULT_ADMIN_HASH,scheme:'sha256',timeoutMin:15,maxAttempts:5,lockoutMin:10,failed:0,lockedUntil:0,audit:[]};}
+function getSecurity(){try{var s=JSON.parse(localStorage.getItem(SECURITY_KEY)||'null')||defaultSecurity();return Object.assign(defaultSecurity(),s);}catch(e){return defaultSecurity();}}
+function setSecurity(s){localStorage.setItem(SECURITY_KEY,JSON.stringify(Object.assign(defaultSecurity(),s||{})));}
+function addAudit(action,status){var s=getSecurity();s.audit=s.audit||[];s.audit.unshift({time:new Date().toISOString(),action:action,status:status||'',ua:(navigator.userAgent||'').slice(0,80)});s.audit=s.audit.slice(0,60);setSecurity(s);}
+async function hashPassword(p){
+  if(window.crypto&&crypto.subtle&&window.TextEncoder){
+    var data=new TextEncoder().encode(p);
+    var buf=await crypto.subtle.digest('SHA-256',data);
+    return Array.prototype.map.call(new Uint8Array(buf),function(b){return b.toString(16).padStart(2,'0');}).join('');
+  }
+  /* fallback when opened as local file in older browsers */
+  var h=5381; for(var i=0;i<p.length;i++){h=((h<<5)+h)+p.charCodeAt(i);h=h&0xffffffff;} return 'fallback_'+(h>>>0).toString(16);
+}
+function sessionKey(){return 'mtcit_admin_session_until';}
+function isAdminSessionValid(){var until=Number(sessionStorage.getItem(sessionKey())||0);return adminUnlocked && until>Date.now();}
+function touchAdminActivity(){var s=getSecurity();sessionStorage.setItem(sessionKey(),String(Date.now()+Number(s.timeoutMin||15)*60000));resetAuthTimer();}
+function resetAuthTimer(){clearTimeout(authTimer);var until=Number(sessionStorage.getItem(sessionKey())||0);var ms=Math.max(0,until-Date.now());if(ms>0)authTimer=setTimeout(lockAdminNow,ms+300);}
+function lockAdminNow(){adminUnlocked=false;sessionStorage.removeItem(sessionKey());setStatus('تم قفل صفحات الإدارة','#854F0B');activateRole('tr');addAudit('قفل يدوي/تلقائي','تم');}
+function showAuthModal(role){
+  var s=getSecurity(), now=Date.now();
+  var modal=document.getElementById('auth-modal'), err=document.getElementById('auth-error'), sub=document.getElementById('auth-sub');
+  err.style.display='none';document.getElementById('auth-pass').value='';
+  var names={stats:'لوحة المؤشرات',adm:'صفحة المشرف',qb:'صفحة الأسئلة',sec:'إعدادات الحماية'};
+  if(now<Number(s.lockedUntil||0)){var mins=Math.ceil((s.lockedUntil-now)/60000);err.textContent='تم إيقاف الدخول مؤقتاً بسبب محاولات خاطئة. حاول بعد '+mins+' دقيقة.';err.style.display='block';}
+  sub.textContent='هذه الصفحة محمية: '+(names[role]||'صفحة إدارية')+'. أدخل كلمة مرور المشرف للمتابعة.';
+  modal.classList.add('show');setTimeout(function(){document.getElementById('auth-pass').focus();},50);
+}
+function cancelAuth(){document.getElementById('auth-modal').classList.remove('show');pendingSecureRole=null;activateRole('tr');}
+async function submitAuthPassword(){
+  var s=getSecurity(), now=Date.now(), err=document.getElementById('auth-error');
+  if(now<Number(s.lockedUntil||0)){err.textContent='الدخول موقوف مؤقتاً. حاول لاحقاً.';err.style.display='block';return;}
+  var pass=document.getElementById('auth-pass').value||'';
+  var hp=await hashPassword(pass);
+  var ok=(hp===s.hash);
+  if(!ok){
+    s.failed=Number(s.failed||0)+1;
+    if(s.failed>=Number(s.maxAttempts||5)){s.lockedUntil=Date.now()+Number(s.lockoutMin||10)*60000;s.failed=0;err.textContent='تم إيقاف الدخول لمدة '+s.lockoutMin+' دقائق بسبب محاولات متكررة.';}
+    else err.textContent='كلمة المرور غير صحيحة. المحاولات المتبقية: '+(Number(s.maxAttempts||5)-s.failed);
+    setSecurity(s);err.style.display='block';setStatus('تم رفض الدخول — كلمة المرور غير صحيحة','#DC3545');addAudit('محاولة دخول','فشل');return;
+  }
+  s.failed=0;s.lockedUntil=0;setSecurity(s);adminUnlocked=true;touchAdminActivity();
+  document.getElementById('auth-modal').classList.remove('show');setStatus('تم فتح صلاحيات المشرف لهذه الجلسة','#28A745');addAudit('تسجيل دخول','نجاح');
+  activateRole(pendingSecureRole||'adm');pendingSecureRole=null;
+}
+function togglePassField(id){var e=document.getElementById(id);if(!e)return;e.type=e.type==='password'?'text':'password';}
+function generateStrongPassword(){var chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';var p='';for(var i=0;i<14;i++)p+=chars[Math.floor(Math.random()*chars.length)];document.getElementById('sec-new-pass').value=p;document.getElementById('sec-confirm-pass').value=p;showToast('sec-toast','تم توليد كلمة مرور قوية. احفظها قبل الضغط على حفظ.','tin');}
+async function changeAdminPassword(){
+  var old=document.getElementById('sec-old-pass').value||'', np=document.getElementById('sec-new-pass').value||'', cp=document.getElementById('sec-confirm-pass').value||'';
+  if(!old||!np||!cp){showToast('sec-toast','أكمل جميع حقول كلمة المرور.','ter');return;}
+  if(np.length<8){showToast('sec-toast','كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.','ter');return;}
+  if(np!==cp){showToast('sec-toast','تأكيد كلمة المرور لا يطابق الكلمة الجديدة.','ter');return;}
+  var s=getSecurity(), oh=await hashPassword(old);
+  if(!(oh===s.hash)){showToast('sec-toast','كلمة المرور الحالية غير صحيحة.','ter');addAudit('تغيير كلمة المرور','فشل');return;}
+  s.hash=await hashPassword(np);s.scheme=(s.hash.indexOf('fallback_')===0?'fallback':'sha256');s.failed=0;s.lockedUntil=0;setSecurity(s);
+  document.getElementById('sec-old-pass').value='';document.getElementById('sec-new-pass').value='';document.getElementById('sec-confirm-pass').value='';
+  showToast('sec-toast','تم تغيير كلمة المرور بنجاح.','tok');addAudit('تغيير كلمة المرور','نجاح');
+}
+function saveSecurityPolicy(){var s=getSecurity();s.timeoutMin=Math.max(1,parseInt(document.getElementById('sec-timeout').value||15,10));s.maxAttempts=Math.max(1,parseInt(document.getElementById('sec-max-attempts').value||5,10));s.lockoutMin=Math.max(1,parseInt(document.getElementById('sec-lockout').value||10,10));setSecurity(s);touchAdminActivity();showToast('sec-toast','تم حفظ سياسة الحماية.','tok');addAudit('تحديث سياسة الحماية','نجاح');renderSecuritySettings();}
+function renderSecuritySettings(){var s=getSecurity();document.getElementById('sec-timeout').value=s.timeoutMin;document.getElementById('sec-max-attempts').value=s.maxAttempts;document.getElementById('sec-lockout').value=s.lockoutMin;renderAuditLog();}
+function renderAuditLog(){var s=getSecurity(), div=document.getElementById('audit-log');if(!div)return;var a=s.audit||[];if(!a.length){div.innerHTML='<div class="audit-item" style="color:#888;text-align:center">لا يوجد سجل حتى الآن</div>';return;}div.innerHTML=a.map(function(x){return '<div class="audit-item"><b>'+x.action+'</b> — '+(x.status||'')+'<div style="color:#777;font-size:11px">'+new Date(x.time).toLocaleString('ar-OM')+'</div></div>';}).join('');}
+function clearAuditLog(){var s=getSecurity();s.audit=[];setSecurity(s);renderAuditLog();showToast('sec-toast','تم مسح سجل الحماية.','tok');}
+document.addEventListener('mousemove',function(){if(adminUnlocked)touchAdminActivity();},{passive:true});
+document.addEventListener('keydown',function(){if(adminUnlocked)touchAdminActivity();});
+
 function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 
@@ -1259,6 +1437,7 @@ function createSession(){
   setDB(db);
   currentCode=code;
   renderAdmPanel(code,sess,[]);
+  renderSessionHistory();
   showToast('adm-toast','تم إنشاء الجلسة — رمز المشاركة: '+code,'tok');
   setStatus('جلسة نشطة: '+code,'#28A745');
   document.getElementById('a-batch').value='';
@@ -1276,8 +1455,202 @@ function loadSession(){
   var recs=(db.records&&db.records[code])||[];
   currentCode=code;
   renderAdmPanel(code,sess,recs);
+  renderSessionHistory();
   showToast('adm-toast','تم التحميل — '+recs.length+' متدرب','tok');
   setStatus('تم التحميل','#28A745');
+}
+
+function safeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function shortDate(v){if(!v)return '—';var d=String(v);return d.length>=10?d.slice(0,10):d;}
+function loadSessionByCode(code){
+  document.getElementById('a-code').value=String(code||'').toUpperCase();
+  loadSession();
+  try{document.getElementById('adm-panel').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+function renderSessionHistory(){
+  var wrap=document.getElementById('session-history-wrap');
+  if(!wrap)return;
+  var db=getDB();
+  var q=(document.getElementById('session-search')?document.getElementById('session-search').value:'').trim().toLowerCase();
+  var rows=Object.keys(db.sessions||{}).map(function(code){
+    var s=db.sessions[code]||{};
+    var recs=(db.records&&db.records[code])||[];
+    var pre=recs.filter(function(r){return r.pre;}).length;
+    var post=recs.filter(function(r){return r.post;}).length;
+    var ev=recs.filter(function(r){return r.eval;}).length;
+    var gaps=recs.filter(function(r){return r.gap!=null;}).map(function(r){return Number(r.gap)||0;});
+    var avgGap=gaps.length?Math.round(gaps.reduce(function(a,b){return a+b;},0)/gaps.length):null;
+    return {code:code,batch:s.batch||'',trainer:s.trainer||'',bank:s.bankName||'',start:s.start||'',deadline:s.deadline||'',created:s.created||'',total:recs.length,pre:pre,post:post,ev:ev,avgGap:avgGap};
+  }).filter(function(r){
+    if(!q)return true;
+    return (r.code+' '+r.batch+' '+r.trainer+' '+r.bank).toLowerCase().indexOf(q)>=0;
+  }).sort(function(a,b){return String(b.created||b.start).localeCompare(String(a.created||a.start));});
+  if(!rows.length){
+    wrap.className='session-empty';
+    wrap.innerHTML='<i class="ti ti-database-off" style="font-size:24px;display:block;margin-bottom:6px"></i>لا توجد جلسات محفوظة حتى الآن أو لا توجد نتائج مطابقة للبحث.';
+    return;
+  }
+  wrap.className='session-list';
+  wrap.innerHTML='<table><thead><tr>'+
+    '<th style="width:10%">رمز الجلسة</th><th style="width:21%">الدورة / الدفعة</th><th style="width:12%">المدرب</th><th style="width:10%">التاريخ</th><th style="width:9%">المتدربون</th><th style="width:14%">الإنجاز</th><th style="width:9%">متوسط الفجوة</th><th style="width:15%">إجراء</th>'+
+    '</tr></thead><tbody>'+rows.map(function(r){
+      var active=currentCode===r.code;
+      return '<tr style="'+(active?'background:#EAF5EE':'')+'">'+
+        '<td><span class="session-code">'+safeHtml(r.code)+'</span></td>'+
+        '<td><b>'+safeHtml(r.batch||'جلسة بدون اسم')+'</b><div class="session-mini"><i class="ti ti-books"></i> '+safeHtml(r.bank||'بنك غير محدد')+'</div></td>'+
+        '<td>'+safeHtml(r.trainer||'—')+'</td>'+
+        '<td>'+safeHtml(shortDate(r.start))+'<div class="session-mini">إنشاء: '+safeHtml(shortDate(r.created))+'</div></td>'+
+        '<td><b>'+r.total+'</b></td>'+
+        '<td><span class="bdg b2">قبل '+r.pre+'</span> <span class="bdg b5">بعد '+r.post+'</span> <span class="bdg b6">تقييم '+r.ev+'</span></td>'+
+        '<td>'+(r.avgGap!=null?(r.avgGap>=0?'+':'')+r.avgGap+' نقطة':'—')+'</td>'+
+        '<td><div class="session-row-actions"><button class="bp" style="padding:7px 10px;font-size:12px" onclick="loadSessionByCode(&quot;'+safeHtml(r.code)+'&quot;)"><i class="ti ti-download"></i> تحميل</button><button class="bs" style="padding:7px 10px;font-size:12px;color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="deleteSessionByCode(&quot;'+safeHtml(r.code)+'&quot;)"><i class="ti ti-trash"></i> حذف</button></div></td>'+
+      '</tr>';
+    }).join('')+'</tbody></table>';
+}
+
+
+function deleteSessionByCode(code){
+  code=String(code||'').toUpperCase();
+  if(!code)return;
+  var db=getDB();
+  var sess=db.sessions&&db.sessions[code];
+  if(!sess){showToast('adm-toast','الجلسة غير موجودة.','ter');renderSessionHistory();return;}
+  var count=(db.records&&db.records[code]?db.records[code].length:0);
+  var msg='سيتم حذف الجلسة '+code+' وبياناتها ('+count+' سجل متدرب). هل أنت متأكد؟';
+  if(!confirm(msg))return;
+  delete db.sessions[code];
+  if(db.records)delete db.records[code];
+  setDB(db);
+  if(currentCode===code){
+    currentCode=null;
+    var p=document.getElementById('adm-panel'); if(p)p.style.display='none';
+    var c=document.getElementById('a-code'); if(c)c.value='';
+  }
+  renderSessionHistory();
+  showToast('adm-toast','تم حذف الجلسة وبياناتها بنجاح.','tok');
+  setStatus('تم حذف الجلسة '+code,'#A32D2D');
+}
+
+function clearCurrentSessionRecords(){
+  if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
+  var db=getDB();
+  var recs=(db.records&&db.records[currentCode])||[];
+  if(!recs.length){showToast('adm-toast','لا توجد بيانات متدربين لحذفها.','tin');return;}
+  if(!confirm('سيتم حذف جميع بيانات المتدربين والتقييمات للدورة الحالية '+currentCode+' مع إبقاء الجلسة ورمزها. هل أنت متأكد؟'))return;
+  db.records[currentCode]=[];
+  setDB(db);
+  var sess=db.sessions[currentCode];
+  renderAdmPanel(currentCode,sess,[]);
+  renderSessionHistory();
+  showToast('adm-toast','تم حذف بيانات الدورة الحالية مع إبقاء الجلسة.','tok');
+  setStatus('تم حذف بيانات الدورة الحالية','#A32D2D');
+}
+
+function normalizeEvalRecord(r){
+  var e=r&&r.eval;
+  if(!e&&r&&r.evaluation)e=r.evaluation;
+  if(typeof e==='string'){
+    try{e=JSON.parse(e);}catch(err){e=null;}
+  }
+  return e&&typeof e==='object'?e:null;
+}
+function evalVal(e,id){
+  if(!e)return null;
+  var aliases={
+    course_overall:['course_overall','courseOverall','course','overall','eval_course','evaluation_course','الدورة'],
+    trainer_knowledge:['trainer_knowledge','trainerKnowledge','trainer_k','eval_trainer_k','trainer','trainer_overall','المدرب'],
+    trainer_delivery:['trainer_delivery','trainerDelivery','trainer_d','eval_trainer_d','delivery'],
+    trainer_interaction:['trainer_interaction','trainerInteraction','trainer_i','eval_trainer_i','interaction'],
+    content_quality:['content_quality','contentQuality','eval_content','content'],
+    practical_exercises:['practical_exercises','practicalExercises','eval_practical','practical'],
+    relevance_to_work:['relevance_to_work','relevanceToWork','eval_relevance','relevance'],
+    time_management:['time_management','timeManagement','eval_time','time'],
+    recommend:['recommend','recommendation','eval_recommend'],
+    best_part:['best_part','bestPart','eval_best_part'],
+    improvement:['improvement','improvements','eval_improvement']
+  };
+  var keys=aliases[id]||[id];
+  for(var i=0;i<keys.length;i++){
+    if(e[keys[i]]!==undefined&&e[keys[i]]!==null&&e[keys[i]]!=='')return e[keys[i]];
+  }
+  return null;
+}
+function evalNum(e,id){
+  var v=evalVal(e,id);
+  if(v===null)return null;
+  v=Number(v);
+  return isNaN(v)?null:v;
+}
+function evalText(e,id){
+  var v=evalVal(e,id);
+  return v==null?'':String(v);
+}
+
+function pct(n,d){return d?Math.round((n/d)*100):0;}
+function fmt1(v){v=Number(v||0);return (Math.round(v*10)/10).toFixed(1);}
+function metricBox(title,value,sub,color,icon){
+  return '<div style="background:#fff;border:1px solid #E0E8F0;border-radius:14px;padding:14px;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.04)">'+
+    '<div style="width:38px;height:38px;border-radius:12px;background:'+color+';color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><i class="ti '+icon+'"></i></div>'+ 
+    '<div style="font-size:25px;font-weight:900;color:#003087;line-height:1.2">'+value+'</div>'+ 
+    '<div style="font-size:12px;font-weight:800;color:#333;margin-top:3px">'+title+'</div>'+ 
+    '<div style="font-size:11px;color:#777;margin-top:2px">'+sub+'</div></div>';
+}
+function progressLine(label,val,color,note){
+  val=Math.max(0,Math.min(100,Number(val)||0));
+  return '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:4px"><span>'+label+'</span><span style="color:'+color+'">'+val+'%</span></div><div style="height:8px;background:#E0E8F0;border-radius:99px;overflow:hidden"><div style="height:100%;width:'+val+'%;background:'+color+';border-radius:99px"></div></div>'+(note?'<div style="font-size:10px;color:#888;margin-top:3px">'+note+'</div>':'')+'</div>';
+}
+function sessionRowsAnalytics(){
+  var db=getDB(), out=[];
+  Object.keys(db.sessions||{}).forEach(function(code){
+    var s=db.sessions[code]||{}, recs=(db.records&&db.records[code])||[];
+    var evals=recs.map(function(r){return normalizeEvalRecord(r);}).filter(function(e){return e;});
+    var gaps=recs.filter(function(r){return r.gap!=null}).map(function(r){return Number(r.gap)||0;});
+    var avgCourse=avg(evals.map(function(e){return evalNum(e,'course_overall');}));
+    var avgTrainer=avg(evals.map(function(e){var a=[evalNum(e,'trainer_knowledge'),evalNum(e,'trainer_delivery'),evalNum(e,'trainer_interaction')].filter(function(x){return x!=null&&x>0;}); return a.length?avg(a):null;}));
+    out.push({code:code,batch:s.batch||'—',trainer:s.trainer||'—',start:s.start||'',created:s.created||'',total:recs.length,pre:recs.filter(function(r){return r.pre}).length,post:recs.filter(function(r){return r.post}).length,evalCount:evals.length,avgGap:gaps.length?avg(gaps):null,avgCourse:avgCourse,avgTrainer:avgTrainer,records:recs});
+  });
+  return out.sort(function(a,b){return String(b.created||b.start||'').localeCompare(String(a.created||a.start||''));});
+}
+function renderStatsDashboard(){
+  var wrap=document.getElementById('stats-dashboard'); if(!wrap)return;
+  var rows=sessionRowsAnalytics();
+  var totalSessions=rows.length, totalRegs=rows.reduce(function(s,r){return s+r.total},0), totalPre=rows.reduce(function(s,r){return s+r.pre},0), totalPost=rows.reduce(function(s,r){return s+r.post},0), totalEval=rows.reduce(function(s,r){return s+r.evalCount},0);
+  var allGaps=[]; rows.forEach(function(r){r.records.forEach(function(x){if(x.gap!=null)allGaps.push(Number(x.gap)||0);});});
+  var allCourse=[], allTrainer=[], allContent=[], allPractical=[];
+  rows.forEach(function(r){r.records.forEach(function(rec){var e=normalizeEvalRecord(rec); if(!e)return; var c=evalNum(e,'course_overall'); if(c)allCourse.push(c); var tk=evalNum(e,'trainer_knowledge'); var td=evalNum(e,'trainer_delivery'); var ti=evalNum(e,'trainer_interaction'); [tk,td,ti].forEach(function(v){if(v)allTrainer.push(v)}); var co=evalNum(e,'content_quality'); if(co)allContent.push(co); var pe=evalNum(e,'practical_exercises'); if(pe)allPractical.push(pe);});});
+  var avgGap=allGaps.length?avg(allGaps):0, avgCourse=avg(allCourse), avgTrainer=avg(allTrainer), avgContent=avg(allContent), avgPractical=avg(allPractical);
+  var best=rows.filter(function(r){return r.avgCourse>0}).sort(function(a,b){return b.avgCourse-a.avgCourse})[0];
+  var weakest=rows.filter(function(r){return r.avgCourse>0}).sort(function(a,b){return a.avgCourse-b.avgCourse})[0];
+  var mostReg=rows.slice().sort(function(a,b){return b.total-a.total})[0];
+  var completedRate=pct(totalPost,totalRegs), evalRate=pct(totalEval,totalRegs), preRate=pct(totalPre,totalRegs);
+  if(!rows.length){wrap.innerHTML='<div style="text-align:center;padding:24px;color:#888;font-size:13px"><i class="ti ti-database-off" style="font-size:30px;display:block;margin-bottom:8px"></i>لا توجد جلسات محفوظة بعد.</div>';return;}
+  var table=rows.map(function(r){
+    var cr=r.avgCourse?fmt1(r.avgCourse)+'/5':'—', tr=r.avgTrainer?fmt1(r.avgTrainer)+'/5':'—', gp=r.avgGap!=null?((r.avgGap>=0?'+':'')+fmt1(r.avgGap)):'—';
+    return '<tr><td><b>'+safeHtml(r.code)+'</b><div class="session-mini">'+safeHtml(shortDate(r.created||r.start))+'</div></td><td>'+safeHtml(r.batch)+'</td><td>'+safeHtml(r.trainer)+'</td><td>'+r.total+'</td><td>'+pct(r.post,r.total)+'%</td><td>'+gp+'</td><td>'+cr+'</td><td>'+tr+'</td><td><button class="bs" onclick="loadSessionByCode(&quot;'+safeHtml(r.code)+'&quot;);setRole(\'adm\')"><i class="ti ti-download"></i> فتح</button></td></tr>';
+  }).join('');
+  wrap.innerHTML=''
+    +'<div class="krow5" style="margin-bottom:14px">'
+    +metricBox('إجمالي الجلسات',totalSessions,'جلسات محفوظة','#003087','ti-calendar-stats')
+    +metricBox('إجمالي المتدربين',totalRegs,'كل المسجلين','#0F6E56','ti-users')
+    +metricBox('إكمال اختبار قبل',preRate+'%',' '+totalPre+' من '+totalRegs,'#534AB7','ti-clipboard-check')
+    +metricBox('إكمال اختبار بعد',completedRate+'%',' '+totalPost+' من '+totalRegs,'#1D9E75','ti-checkup-list')
+    +metricBox('إكمال التقييم',evalRate+'%',' '+totalEval+' تقييم','#C0A500','ti-star')+'</div>'
+    +'<div class="r2">'
+    +'<div class="card" style="margin:0"><div class="sec" style="margin-bottom:10px"><div class="sec-l"><i class="ti ti-gauge"></i> مؤشرات الجودة والتأثير</div></div>'
+    +progressLine('متوسط تقييم الدورة',avgCourse/5*100,'#003087',fmt1(avgCourse)+' / 5')
+    +progressLine('متوسط تقييم المدرب',avgTrainer/5*100,'#0F6E56',fmt1(avgTrainer)+' / 5')
+    +progressLine('جودة المحتوى',avgContent/5*100,'#534AB7',fmt1(avgContent)+' / 5')
+    +progressLine('التطبيقات العملية',avgPractical/5*100,'#A32D2D',fmt1(avgPractical)+' / 5')
+    +progressLine('أثر التعلم / متوسط الفجوة',Math.max(0,Math.min(100,50+avgGap)),'#1D9E75',(avgGap>=0?'+':'')+fmt1(avgGap)+' نقطة')+'</div>'
+    +'<div class="card" style="margin:0"><div class="sec" style="margin-bottom:10px"><div class="sec-l"><i class="ti ti-award"></i> قراءات تنفيذية سريعة</div></div>'
+    +'<div style="display:grid;gap:10px;font-size:12px">'
+    +'<div style="background:#EAF5EE;border:1px solid #A8D8B8;border-radius:10px;padding:12px"><b style="color:#155724">أفضل دورة تقييماً:</b><br>'+safeHtml(best?best.batch:'—')+' <span class="bdg b1">'+(best?fmt1(best.avgCourse)+'/5':'—')+'</span></div>'
+    +'<div style="background:#FFFBEA;border:1px solid #F0D060;border-radius:10px;padding:12px"><b style="color:#856404">دورة تحتاج تحسين:</b><br>'+safeHtml(weakest?weakest.batch:'—')+' <span class="bdg b3">'+(weakest?fmt1(weakest.avgCourse)+'/5':'—')+'</span></div>'
+    +'<div style="background:#EAF1FB;border:1px solid #B5D4F4;border-radius:10px;padding:12px"><b style="color:#003087">الأعلى حضوراً:</b><br>'+safeHtml(mostReg?mostReg.batch:'—')+' <span class="bdg b2">'+(mostReg?mostReg.total:0)+' متدرب</span></div>'
+    +'<div style="background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:12px"><b>توصية تشغيلية:</b><br>'+(completedRate<70?'رفع المتابعة لإكمال اختبار بعد الورشة.':evalRate<70?'تفعيل تذكير تقييم الدورة بعد الاختبار البعدي.':'الاستمرار في تحليل الفجوات وربطها بخطط التطوير.')+'</div>'
+    +'</div></div></div>'
+    +'<div class="sec" style="margin-top:16px"><div class="sec-l"><i class="ti ti-table"></i> مقارنة الجلسات السابقة</div></div>'
+    +'<div class="tw"><table><thead><tr><th>الرمز</th><th>الدورة</th><th>المدرب</th><th>مسجلون</th><th>إكمال بعد</th><th>الفجوة</th><th>الدورة</th><th>المدرب</th><th>فتح</th></tr></thead><tbody>'+table+'</tbody></table></div>';
 }
 
 function renderAdmPanel(code,sess,recs){
@@ -1289,10 +1662,10 @@ function renderAdmPanel(code,sess,recs){
     +'<div style="font-size:12px;color:#888;margin-top:2px"><i class="ti ti-books" style="font-size:12px"></i> بنك الأسئلة: '+(sess.bankName||'—')+'</div></div>'
     +'<button class="bs" onclick="copyCode(\''+code+'\')"><i class="ti ti-copy"></i> نسخ الرمز</button></div>';
 
-  var evals=recs.filter(function(r){return r.eval;});
+  var evals=recs.map(function(r){return normalizeEvalRecord(r);}).filter(function(e){return e;});
   var gaps=recs.filter(function(r){return r.gap!=null;}).map(function(r){return r.gap;});
   var avgGap=gaps.length?Math.round(gaps.reduce(function(a,b){return a+b;},0)/gaps.length):null;
-  var avgEval=evals.length?(Math.round(avg(evals.map(function(r){return r.eval.course_overall||0;}))*10)/10):null;
+  var avgEval=evals.length?(Math.round(avg(evals.map(function(e){return evalNum(e,'course_overall');}))*10)/10):null;
 
   document.getElementById('k-tot').textContent=recs.length;
   document.getElementById('k-pre').textContent=recs.filter(function(r){return r.pre;}).length;
@@ -1308,18 +1681,18 @@ function renderAdmPanel(code,sess,recs){
 function renderEvalSummary(evals){
   var div=document.getElementById('eval-summary');
   if(!evals.length){div.innerHTML='<div style="text-align:center;padding:16px;color:#888;font-size:13px">لا تقييمات بعد</div>';return;}
-  var ac=avg(evals.map(function(r){return r.eval.course_overall||0;}));
-  var atk=avg(evals.map(function(r){return r.eval.trainer_knowledge||0;}));
-  var atd=avg(evals.map(function(r){return r.eval.trainer_delivery||0;}));
-  var ati=avg(evals.map(function(r){return r.eval.trainer_interaction||0;}));
-  var acon=avg(evals.map(function(r){return r.eval.content_quality||0;}));
-  var ape=avg(evals.map(function(r){return r.eval.practical_exercises||0;}));
-  var arl=avg(evals.map(function(r){return r.eval.relevance_to_work||0;}));
-  var atm=avg(evals.map(function(r){return r.eval.time_management||0;}));
-  var rec_yes=evals.filter(function(r){return r.eval.recommend==='yes';}).length;
+  var ac=avg(evals.map(function(e){return evalNum(e,'course_overall');}));
+  var atk=avg(evals.map(function(e){return evalNum(e,'trainer_knowledge');}));
+  var atd=avg(evals.map(function(e){return evalNum(e,'trainer_delivery');}));
+  var ati=avg(evals.map(function(e){return evalNum(e,'trainer_interaction');}));
+  var acon=avg(evals.map(function(e){return evalNum(e,'content_quality');}));
+  var ape=avg(evals.map(function(e){return evalNum(e,'practical_exercises');}));
+  var arl=avg(evals.map(function(e){return evalNum(e,'relevance_to_work');}));
+  var atm=avg(evals.map(function(e){return evalNum(e,'time_management');}));
+  var rec_yes=evals.filter(function(e){return evalVal(e,'recommend')==='yes';}).length;
   var avgT=(atk+atd+ati)/3;
-  var improvements=evals.filter(function(r){return r.eval.improvement&&r.eval.improvement.trim();}).map(function(r){return '"'+r.eval.improvement.trim()+'"';});
-  var bests=evals.filter(function(r){return r.eval.best_part&&r.eval.best_part.trim();}).map(function(r){return '"'+r.eval.best_part.trim()+'"';});
+  var improvements=evals.filter(function(e){var v=evalText(e,'improvement');return v&&v.trim();}).map(function(e){return '"'+evalText(e,'improvement').trim()+'"';});
+  var bests=evals.filter(function(e){var v=evalText(e,'best_part');return v&&v.trim();}).map(function(e){return '"'+evalText(e,'best_part').trim()+'"';});
   var bars=[['كفاءة المدرب',atk,'#003087'],['أسلوب التقديم',atd,'#0F6E56'],['التفاعل',ati,'#C0A500'],['جودة المحتوى',acon,'#534AB7'],['التطبيق العملي',ape,'#A32D2D'],['الصلة بالعمل',arl,'#1D9E75'],['إدارة الوقت',atm,'#888']];
   var barsHtml=bars.map(function(b){return '<div class="ebarrow"><span style="font-size:13px;min-width:130px">'+b[0]+'</span><div style="flex:1;background:#E0E8F0;border-radius:3px;height:8px;overflow:hidden;margin:0 10px"><div style="width:'+(b[1]/5*100)+'%;height:100%;background:'+b[2]+';border-radius:3px"></div></div><span style="font-size:12px;font-weight:700;min-width:36px;text-align:left;color:#003087">'+b[1].toFixed(1)+'</span></div>';}).join('');
   var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
@@ -1343,9 +1716,10 @@ function renderTable(recs){
     var post=(r.post&&r.post.total!=null)?r.post.total+'%':'—';
     var gap=r.gap!=null?(r.gap>=0?'+':'')+r.gap+' نقطة':'—';
     var gb=r.gap==null?'b2':r.gap>=20?'b1':r.gap>=10?'b2':r.gap>=0?'b3':'b4';
-    var ce=r.eval&&r.eval.course_overall?stars(r.eval.course_overall):'—';
-    var te=r.eval&&r.eval.trainer_knowledge?stars(r.eval.trainer_knowledge):'—';
-    var st=r.eval?'<span class="bdg b1">مكتمل &#10003;</span>':r.post?'<span class="bdg b5">بعد &#10003;</span>':r.pre?'<span class="bdg b3">قبل &#10003;</span>':'<span class="bdg b4">لم يبدأ</span>';
+    var ev=normalizeEvalRecord(r);
+    var ce=ev&&evalNum(ev,'course_overall')?stars(evalNum(ev,'course_overall')):'—';
+    var te=ev&&evalNum(ev,'trainer_knowledge')?stars(evalNum(ev,'trainer_knowledge')):'—';
+    var st=ev?'<span class="bdg b1">مكتمل &#10003;</span>':r.post?'<span class="bdg b5">بعد &#10003;</span>':r.pre?'<span class="bdg b3">قبل &#10003;</span>':'<span class="bdg b4">لم يبدأ</span>';
     var d='—';
     if(r.lastUpdate){var dt=new Date(r.lastUpdate);d=isNaN(dt.getTime())?'—':dt.toLocaleDateString('ar-OM');}
     var name=safeTxt(r.name);
@@ -1402,7 +1776,7 @@ function showResume(code,sess,rec){
   else{document.getElementById('si-pre').style.background='#003087';document.getElementById('si-pre').innerHTML='<i class="ti ti-player-play" style="color:#fff"></i>';document.getElementById('sub-pre').textContent='لم تبدأ بعد';document.getElementById('bdg-pre').className='bdg b3';document.getElementById('bdg-pre').textContent='لم يبدأ';}
   if(hasPost){document.getElementById('si-post').style.background='#EAF5EE';document.getElementById('si-post').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-post').textContent='الدرجة: '+rec.post.total+'% · فجوة: '+(rec.gap>=0?'+':'')+rec.gap+' نقطة';document.getElementById('bdg-post').className='bdg b1';document.getElementById('bdg-post').textContent='مكتمل';document.getElementById('sr-post').style.background='#F0FAF4';}
   else if(hasPre){document.getElementById('si-post').style.background='#003087';document.getElementById('si-post').innerHTML='<i class="ti ti-player-play" style="color:#fff"></i>';document.getElementById('sub-post').textContent='جاهز للبدء';document.getElementById('bdg-post').className='bdg b2';document.getElementById('bdg-post').textContent='جاهز الآن';document.getElementById('sr-post').style.border='2px solid #003087';}
-  if(hasEval){document.getElementById('si-eval').style.background='#EAF5EE';document.getElementById('si-eval').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-eval').textContent='إكتمل;';document.getElementById('bdg-eval').className='bdg b1';document.getElementById('bdg-eval').textContent='مكتمل';document.getElementById('sr-eval').style.background='#F0FAF4';}
+  if(hasEval){document.getElementById('si-eval').style.background='#EAF5EE';document.getElementById('si-eval').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-eval').textContent='اكتمل';document.getElementById('bdg-eval').className='bdg b1';document.getElementById('bdg-eval').textContent='مكتمل';document.getElementById('sr-eval').style.background='#F0FAF4';}
   else if(hasPost){document.getElementById('si-eval').style.background='#534AB7';document.getElementById('si-eval').innerHTML='<i class="ti ti-star" style="color:#fff"></i>';document.getElementById('sub-eval').textContent='جاهز — شارك رأيك';document.getElementById('bdg-eval').className='bdg b6';document.getElementById('bdg-eval').textContent='جاهز الآن';document.getElementById('sr-eval').style.border='2px solid #534AB7';}
   var area=document.getElementById('resume-btns');
   if(!hasPre){area.innerHTML='<button class="bp bp-full" onclick="resumeStart(\'pre\')"><i class="ti ti-player-play"></i> ابدأ اختبار قبل الورشة الآن</button>';}
@@ -1575,8 +1949,8 @@ function doExport(fmt){
   var rows=recs.map(function(r){
     var pv=secList.map(function(s){return r.pre&&r.pre.secScores?r.pre.secScores[s]!=null?r.pre.secScores[s]:'':'';});
     var pov=secList.map(function(s){return r.post&&r.post.secScores?r.post.secScores[s]!=null?r.post.secScores[s]:'':'';});
-    var e=r.eval||{};
-    var row=[r.name,r.eid,r.dept,r.title].concat(pv).concat([r.pre?r.pre.total:'',r.pre?r.pre.confidence!=null?r.pre.confidence:'':'',r.pre?r.pre.open_answer||'':'']).concat(pov).concat([r.post?r.post.total:'',r.post?r.post.confidence!=null?r.post.confidence:'':'',r.post?r.post.open_answer||'':'',r.gap!=null?r.gap:'',e.course_overall||'',e.trainer_knowledge||'',e.trainer_delivery||'',e.trainer_interaction||'',e.content_quality||'',e.practical_exercises||'',e.relevance_to_work||'',e.time_management||'',e.recommend||'',e.best_part||'',e.improvement||'',r.lastUpdate||'']);
+    var e=normalizeEvalRecord(r)||{};
+    var row=[r.name,r.eid,r.dept,r.title].concat(pv).concat([r.pre?r.pre.total:'',r.pre?r.pre.confidence!=null?r.pre.confidence:'':'',r.pre?r.pre.open_answer||'':'']).concat(pov).concat([r.post?r.post.total:'',r.post?r.post.confidence!=null?r.post.confidence:'':'',r.post?r.post.open_answer||'':'',r.gap!=null?r.gap:'',evalVal(e,'course_overall')||'',evalVal(e,'trainer_knowledge')||'',evalVal(e,'trainer_delivery')||'',evalVal(e,'trainer_interaction')||'',evalVal(e,'content_quality')||'',evalVal(e,'practical_exercises')||'',evalVal(e,'relevance_to_work')||'',evalVal(e,'time_management')||'',evalVal(e,'recommend')||'',evalVal(e,'best_part')||'',evalVal(e,'improvement')||'',r.lastUpdate||'']);
     return row.map(function(v){var s=String(v!=null?v:'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');
   });
   var csv=hdr.join(',')+'\n'+rows.join('\n');
@@ -1587,8 +1961,11 @@ function doExport(fmt){
 
 /* ===================== INIT ===================== */
 try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
+setSecurity(getSecurity());
+resetAuthTimer();
 initDefaultBank();
 populateBankSelect();
+renderSessionHistory();
 </script>
 </body>
 </html>
