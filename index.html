@@ -151,7 +151,15 @@ tr:hover td{background:#F8FAFD}
 .opt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .opt-row input{flex:1}
 .opt-row .ans-radio{width:18px;height:18px;cursor:pointer;flex-shrink:0}
-@media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}}
+
+/* Security & evaluation import */
+.lock-screen{position:fixed;inset:0;background:linear-gradient(135deg,rgba(0,48,135,.96),rgba(10,36,80,.96));z-index:500;display:none;align-items:center;justify-content:center;padding:18px}
+.lock-screen.show{display:flex}.lock-card{width:100%;max-width:430px;background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+.lock-title{font-size:18px;font-weight:900;color:#003087;display:flex;align-items:center;gap:8px;margin-bottom:6px}.lock-sub{font-size:12px;color:#667085;margin-bottom:16px;line-height:1.7}
+.pass-wrap{position:relative}.pass-wrap input{padding-left:42px}.eye-btn{position:absolute;left:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#667085;cursor:pointer;font-size:18px}
+.sec-note{font-size:11px;color:#6B7280;background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:10px;line-height:1.7}.sec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.import-panel{background:#F8FAFD;border:1px dashed #B5D4F4;border-radius:12px;padding:12px;margin-top:12px}
+@media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}.sec-grid{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -166,6 +174,7 @@ tr:hover td{background:#F8FAFD}
     <button class="rtb" id="rb-stats" onclick="setRole('stats')"><i class="ti ti-chart-infographic"></i> مؤشرات</button>
     <button class="rtb" id="rb-adm" onclick="setRole('adm')"><i class="ti ti-shield"></i> مشرف</button>
     <button class="rtb"    id="rb-qb"  onclick="setRole('qb')"><i class="ti ti-list-check"></i> الأسئلة</button>
+    <button class="rtb" id="rb-sec" onclick="setRole('sec')"><i class="ti ti-lock-cog"></i> الأمان</button>
     <button class="rtb on"    id="rb-tr"  onclick="setRole('tr')"><i class="ti ti-user"></i> متدرب</button>
   </div>
 </div>
@@ -270,8 +279,14 @@ tr:hover td{background:#F8FAFD}
     </table></div>
     <div class="exprow">
       <button class="bs" onclick="doExport('csv')"><i class="ti ti-table-export"></i> CSV</button>
+      <button class="bs" onclick="doExport('xlsx')"><i class="ti ti-file-spreadsheet"></i> XLSX</button>
       <button class="bs" onclick="doExport('json')"><i class="ti ti-braces"></i> JSON</button>
       <button class="bs" onclick="doExport('copy')"><i class="ti ti-copy"></i> نسخ</button>
+    </div>
+    <div class="import-panel">
+      <div class="lbl"><i class="ti ti-file-import"></i> استيراد ملفات التقييم CSV / JSON / XLSX للدورة الحالية</div>
+      <input type="file" id="eval-import-file" accept=".csv,.json,.xlsx,.xls" onchange="importEvaluationFile()" style="font-size:12px;padding:6px;width:100%">
+      <div style="font-size:11px;color:#777;margin-top:6px;line-height:1.7">يمكن استيراد ملف تصدير سابق من المنصة، وسيتم دمج السجلات حسب الرقم الوظيفي دون حذف السجلات الحالية.</div>
     </div>
   </div>
 </div>
@@ -308,6 +323,21 @@ tr:hover td{background:#F8FAFD}
         <button class="bs" onclick="downloadQuestionsTemplate('xlsx')"><i class="ti ti-file-spreadsheet"></i> قالب XLSX</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="view" id="v-sec">
+  <div id="sec-toast" class="toast"></div>
+  <div class="sec"><div class="sec-l"><i class="ti ti-lock-cog"></i> إعدادات الأمان وكلمة المرور</div></div>
+  <div class="card cblue"><div class="sec-note">كلمة المرور غير محفوظة كنص داخل الملف. يتم التحقق باستخدام بصمة تشفير SHA-256، ويمكن تغييرها من هذه الصفحة.</div></div>
+  <div class="card">
+    <div class="sec"><div class="sec-l"><i class="ti ti-key"></i> تغيير كلمة مرور المشرف</div></div>
+    <div class="sec-grid">
+      <div><div class="lbl"><span class="req">*</span>كلمة المرور الحالية</div><div class="pass-wrap"><input type="password" id="sec-old-pass" placeholder="أدخل كلمة المرور الحالية"><button class="eye-btn" onclick="togglePassField('sec-old-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+      <div><div class="lbl"><span class="req">*</span>كلمة المرور الجديدة</div><div class="pass-wrap"><input type="password" id="sec-new-pass" placeholder="يفضل 8 أحرف أو أكثر"><button class="eye-btn" onclick="togglePassField('sec-new-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+      <div><div class="lbl"><span class="req">*</span>تأكيد كلمة المرور الجديدة</div><div class="pass-wrap"><input type="password" id="sec-confirm-pass" placeholder="أعد إدخال كلمة المرور"><button class="eye-btn" onclick="togglePassField('sec-confirm-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
+    </div>
+    <button class="bp" onclick="changeAdminPassword()"><i class="ti ti-device-floppy"></i> حفظ كلمة المرور الجديدة</button>
   </div>
 </div>
 
@@ -473,6 +503,15 @@ tr:hover td{background:#F8FAFD}
 </div>
 </div></div>
 
+<div id="admin-lock" class="lock-screen">
+  <div class="lock-card">
+    <div class="lock-title"><i class="ti ti-lock"></i> دخول المشرف</div>
+    <div class="lock-sub">الرجاء إدخال بيانات الدخول للوصول إلى لوحة التحكم.</div>
+    <div class="pass-wrap" style="margin-bottom:10px"><input type="password" id="admin-pass-input" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')submitAdminLogin()"><button class="eye-btn" onclick="togglePassField('admin-pass-input')" type="button"><i class="ti ti-eye"></i></button></div>
+    <div id="admin-lock-error" style="display:none;color:#A32D2D;background:#FFF5F5;border:1px solid #F0B4BA;border-radius:8px;padding:8px;font-size:12px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px"><button class="bp" style="flex:1" onclick="submitAdminLogin()"><i class="ti ti-login"></i> دخول</button><button class="bs" style="flex:1" onclick="cancelAdminLogin()">إلغاء</button></div>
+  </div>
+</div>
 <script>
 /* ===================== DEFAULT QUESTION BANK ===================== */
 var DEFAULT_QS = [
@@ -745,8 +784,10 @@ var EQS = [
 var currentCode = null;
 var currentBankId = null;
 var editingBankId = null;
-var ADMIN_PASSWORD = 'MTCIT2026';
+var ADMIN_DEFAULT_HASH = '4c206a46c60e86396a84bd821a0683d3dd9698da65e6bd36391627ca0f322cf5';
+var ADMIN_HASH_KEY = 'mtcit_mbo_kpi_admin_hash_v3';
 var adminUnlocked = false;
+var pendingAdminRole = null;
 var tr = {code:null,rec:null,qs:[],mode:'pre',idx:0,ans:[],rev:[],ev:{}};
 
 /* ===================== CENTRAL STORAGE CONFIG =====================
@@ -946,26 +987,66 @@ function stars(v,max){max=max||5;var s='';for(var i=1;i<=max;i++)s+='<span style
 function show(id,d){var e=document.getElementById(id);if(e)e.style.display=d||'block';}
 function hide(id){var e=document.getElementById(id);if(e)e.style.display='none';}
 function setRole(r){
-  if((r==='stats'||r==='adm'||r==='qb')&&!adminUnlocked){
-    var p=prompt('هذه الصفحة مخصصة للمشرف فقط. أدخل كلمة السر:');
-    if(p!==ADMIN_PASSWORD){
-      setStatus('تم رفض الدخول — كلمة السر غير صحيحة','#DC3545');
-      ['stats','adm','qb','tr'].forEach(function(x){
-        document.getElementById('v-'+x).classList.toggle('on',x==='tr');
-        document.getElementById('rb-'+x).classList.toggle('on',x==='tr');
-      });
-      return;
-    }
-    adminUnlocked=true;
-    setStatus('تم فتح صلاحيات المشرف لهذه الجلسة','#28A745');
-  }
-  ['stats','adm','qb','tr'].forEach(function(x){
-    document.getElementById('v-'+x).classList.toggle('on',x===r);
-    document.getElementById('rb-'+x).classList.toggle('on',x===r);
+  if((r==='stats'||r==='adm'||r==='qb'||r==='sec')&&!adminUnlocked){showAdminLogin(r);return;}
+  activateRole(r);
+}
+function activateRole(r){
+  ['stats','adm','qb','sec','tr'].forEach(function(x){
+    var v=document.getElementById('v-'+x),b=document.getElementById('rb-'+x);
+    if(v)v.classList.toggle('on',x===r);
+    if(b)b.classList.toggle('on',x===r);
   });
   if(r==='stats')renderStatsDashboard();
   if(r==='qb')renderBanksList();
   if(r==='adm'){populateBankSelect();renderSessionHistory();}
+}
+async function sha256Text(txt){
+  if(window.crypto&&crypto.subtle){
+    var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(txt||'')));
+    return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  }
+  // fallback بسيط للمتصفحات القديمة جداً: لا يستخدم إلا مؤقتاً، ويفضل تشغيل المنصة على متصفح حديث.
+  var h=0,s=String(txt||'');for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return 'legacy_'+Math.abs(h);
+}
+function getAdminHash(){return localStorage.getItem(ADMIN_HASH_KEY)||ADMIN_DEFAULT_HASH;}
+function showAdminLogin(role){
+  pendingAdminRole=role;
+  var box=document.getElementById('admin-lock'),inp=document.getElementById('admin-pass-input'),er=document.getElementById('admin-lock-error');
+  if(er){er.style.display='none';er.textContent='';}
+  if(box)box.classList.add('show');
+  if(inp){inp.value='';setTimeout(function(){inp.focus();},80);}
+}
+function cancelAdminLogin(){
+  pendingAdminRole=null;
+  var box=document.getElementById('admin-lock'); if(box)box.classList.remove('show');
+  activateRole('tr');
+}
+async function submitAdminLogin(){
+  var inp=document.getElementById('admin-pass-input'),er=document.getElementById('admin-lock-error');
+  var pass=inp?inp.value:'';
+  var hash=await sha256Text(pass);
+  if(hash!==getAdminHash()){
+    if(er){er.textContent='كلمة المرور غير صحيحة.';er.style.display='block';}
+    setStatus('تم رفض الدخول — كلمة المرور غير صحيحة','#DC3545');
+    return;
+  }
+  adminUnlocked=true;
+  var box=document.getElementById('admin-lock'); if(box)box.classList.remove('show');
+  setStatus('تم فتح صلاحيات المشرف لهذه الجلسة','#28A745');
+  activateRole(pendingAdminRole||'adm');
+  pendingAdminRole=null;
+}
+function togglePassField(id){var e=document.getElementById(id);if(e)e.type=e.type==='password'?'text':'password';}
+async function changeAdminPassword(){
+  var old=document.getElementById('sec-old-pass').value,newp=document.getElementById('sec-new-pass').value,conf=document.getElementById('sec-confirm-pass').value;
+  if(!old||!newp||!conf){showToast('sec-toast','جميع الحقول مطلوبة.','ter');return;}
+  if(newp.length<6){showToast('sec-toast','كلمة المرور الجديدة قصيرة جداً.','ter');return;}
+  if(newp!==conf){showToast('sec-toast','تأكيد كلمة المرور غير مطابق.','ter');return;}
+  if(await sha256Text(old)!==getAdminHash()){showToast('sec-toast','كلمة المرور الحالية غير صحيحة.','ter');return;}
+  localStorage.setItem(ADMIN_HASH_KEY,await sha256Text(newp));
+  document.getElementById('sec-old-pass').value='';document.getElementById('sec-new-pass').value='';document.getElementById('sec-confirm-pass').value='';
+  showToast('sec-toast','تم تغيير كلمة المرور بنجاح.','tok');
+  setStatus('تم تحديث إعدادات الأمان','#28A745');
 }
 function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
@@ -1961,29 +2042,160 @@ function saveEval(){
 }
 
 /* ===================== EXPORT ===================== */
+function getExportRows(recs,secList){
+  var headers=['name','eid','dept','title'];
+  secList.forEach(function(s){headers.push('pre_'+s.replace(/\s+/g,'_'));});
+  headers=headers.concat(['pre_total','pre_confidence','pre_open']);
+  secList.forEach(function(s){headers.push('post_'+s.replace(/\s+/g,'_'));});
+  headers=headers.concat(['post_total','post_confidence','post_open','gap','eval_course','eval_trainer_k','eval_trainer_d','eval_trainer_i','eval_content','eval_practical','eval_relevance','eval_time','eval_recommend','eval_best_part','eval_improvement','lastUpdate']);
+  var rows=recs.map(function(r){
+    var obj={name:r.name||'',eid:r.eid||'',dept:r.dept||'',title:r.title||''};
+    secList.forEach(function(s){obj['pre_'+s.replace(/\s+/g,'_')]=r.pre&&r.pre.secScores&&r.pre.secScores[s]!=null?r.pre.secScores[s]:'';});
+    obj.pre_total=r.pre?r.pre.total:''; obj.pre_confidence=r.pre&&r.pre.confidence!=null?r.pre.confidence:''; obj.pre_open=r.pre?r.pre.open_answer||'':'';
+    secList.forEach(function(s){obj['post_'+s.replace(/\s+/g,'_')]=r.post&&r.post.secScores&&r.post.secScores[s]!=null?r.post.secScores[s]:'';});
+    obj.post_total=r.post?r.post.total:''; obj.post_confidence=r.post&&r.post.confidence!=null?r.post.confidence:''; obj.post_open=r.post?r.post.open_answer||'':'';
+    obj.gap=r.gap!=null?r.gap:'';
+    var e=normalizeEvalRecord(r)||{};
+    obj.eval_course=evalVal(e,'course_overall')||'';obj.eval_trainer_k=evalVal(e,'trainer_knowledge')||'';obj.eval_trainer_d=evalVal(e,'trainer_delivery')||'';obj.eval_trainer_i=evalVal(e,'trainer_interaction')||'';obj.eval_content=evalVal(e,'content_quality')||'';obj.eval_practical=evalVal(e,'practical_exercises')||'';obj.eval_relevance=evalVal(e,'relevance_to_work')||'';obj.eval_time=evalVal(e,'time_management')||'';obj.eval_recommend=evalVal(e,'recommend')||'';obj.eval_best_part=evalVal(e,'best_part')||'';obj.eval_improvement=evalVal(e,'improvement')||'';obj.lastUpdate=r.lastUpdate||'';
+    return obj;
+  });
+  return {headers:headers,rows:rows};
+}
+function rowsToCSVObjects(rows,headers){
+  var arr=[headers.join(',')];
+  rows.forEach(function(o){arr.push(headers.map(function(h){var s=String(o[h]!=null?o[h]:'');return(s.indexOf(',')>=0||s.indexOf('"')>=0||s.indexOf('\n')>=0)?'"'+s.replace(/"/g,'""')+'"':s;}).join(','));});
+  return arr.join('\n');
+}
 function doExport(fmt){
   if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
   var db=getDB();var recs=(db.records&&db.records[currentCode])||[];
   if(!recs.length){showToast('adm-toast','لا بيانات.','ter');return;}
   var sess=db.sessions[currentCode];
   var bank=sess&&db.banks[sess.bankId];
-  var secList=bank?[...new Set(bank.questions.filter(function(q){return q.t==='m';}).map(function(q){return q.s;}))]:[]; 
-  var hdr=['name','eid','dept','title'];
-  secList.forEach(function(s){hdr.push('pre_'+s.replace(/\s+/g,'_'));});
-  hdr=hdr.concat(['pre_total','pre_confidence','pre_open']);
-  secList.forEach(function(s){hdr.push('post_'+s.replace(/\s+/g,'_'));});
-  hdr=hdr.concat(['post_total','post_confidence','post_open','gap','eval_course','eval_trainer_k','eval_trainer_d','eval_trainer_i','eval_content','eval_practical','eval_relevance','eval_time','eval_recommend','eval_best_part','eval_improvement','lastUpdate']);
-  var rows=recs.map(function(r){
-    var pv=secList.map(function(s){return r.pre&&r.pre.secScores?r.pre.secScores[s]!=null?r.pre.secScores[s]:'':'';});
-    var pov=secList.map(function(s){return r.post&&r.post.secScores?r.post.secScores[s]!=null?r.post.secScores[s]:'':'';});
-    var e=normalizeEvalRecord(r)||{};
-    var row=[r.name,r.eid,r.dept,r.title].concat(pv).concat([r.pre?r.pre.total:'',r.pre?r.pre.confidence!=null?r.pre.confidence:'':'',r.pre?r.pre.open_answer||'':'']).concat(pov).concat([r.post?r.post.total:'',r.post?r.post.confidence!=null?r.post.confidence:'':'',r.post?r.post.open_answer||'':'',r.gap!=null?r.gap:'',evalVal(e,'course_overall')||'',evalVal(e,'trainer_knowledge')||'',evalVal(e,'trainer_delivery')||'',evalVal(e,'trainer_interaction')||'',evalVal(e,'content_quality')||'',evalVal(e,'practical_exercises')||'',evalVal(e,'relevance_to_work')||'',evalVal(e,'time_management')||'',evalVal(e,'recommend')||'',evalVal(e,'best_part')||'',evalVal(e,'improvement')||'',r.lastUpdate||'']);
-    return row.map(function(v){var s=String(v!=null?v:'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');
-  });
-  var csv=hdr.join(',')+'\n'+rows.join('\n');
-  if(fmt==='csv'){var b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='MTCIT_'+currentCode+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);showToast('adm-toast','تم التصدير','tok');}
-  else if(fmt==='json'){var b2=new Blob([JSON.stringify(recs,null,2)],{type:'application/json'});var u2=URL.createObjectURL(b2);var a2=document.createElement('a');a2.href=u2;a2.download='MTCIT_'+currentCode+'_'+new Date().toISOString().slice(0,10)+'.json';a2.click();URL.revokeObjectURL(u2);showToast('adm-toast','تم التصدير','tok');}
+  var secList=bank?[...new Set(bank.questions.filter(function(q){return q.t==='m';}).map(function(q){return q.s;}))]:[];
+  var pack=getExportRows(recs,secList);
+  var base='MTCIT_'+currentCode+'_'+new Date().toISOString().slice(0,10);
+  var csv=rowsToCSVObjects(pack.rows,pack.headers);
+  if(fmt==='csv'){downloadBlob('\uFEFF'+csv,'text/csv;charset=utf-8',base+'.csv');showToast('adm-toast','تم التصدير CSV','tok');}
+  else if(fmt==='xlsx'){
+    if(typeof XLSX==='undefined'){showToast('adm-toast','تعذر تحميل مكتبة XLSX. استخدم CSV أو اتصل بالإنترنت.','ter');return;}
+    var ws=XLSX.utils.json_to_sheet(pack.rows,{header:pack.headers});
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Evaluation');
+    XLSX.writeFile(wb,base+'.xlsx');
+    showToast('adm-toast','تم التصدير XLSX','tok');
+  }
+  else if(fmt==='json'){downloadBlob(JSON.stringify(recs,null,2),'application/json',base+'.json');showToast('adm-toast','تم التصدير JSON','tok');}
   else{navigator.clipboard.writeText(csv).then(function(){showToast('adm-toast','تم النسخ','tok');});}
+}
+function csvToObjectsText(txt){return rowsToObjects(csvToRows(txt));}
+function importPick(obj,keys){
+  obj=obj||{};
+  var norm=function(x){return String(x||'').toLowerCase().replace(/[\s_\-–—:؛،\/\\()\[\]%.٪]+/g,'').replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');};
+  var map={};
+  Object.keys(obj).forEach(function(k){map[norm(k)]=k;});
+  for(var i=0;i<keys.length;i++){
+    var nk=norm(keys[i]);
+    if(Object.prototype.hasOwnProperty.call(map,nk)){var v=obj[map[nk]]; if(v!==''&&v!=null)return v;}
+  }
+  return '';
+}
+function toNumVal(v){
+  if(v==null||v==='')return null;
+  if(typeof v==='number')return v;
+  var s=String(v).trim();
+  if(!s)return null;
+  var stars=(s.match(/[★⭐✦*]/g)||[]).length;
+  if(stars>0 && stars<=5)return stars;
+  var m=s.replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/[٫,]/g,'.').match(/-?\d+(?:\.\d+)?/);
+  return m?Number(m[0]):null;
+}
+function toStageObj(total,confidence,open){
+  var n=toNumVal(total);
+  if(n==null)return null;
+  return {total:n,confidence:toNumVal(confidence),open_answer:open||'',secScores:{}};
+}
+function normalizeImportedEvaluationRecord(o){
+  if(o&&typeof o==='object'&&(o.pre||o.post||o.eval||o.evaluation)){
+    var rr=Object.assign({},o);
+    rr.id=rr.id||('rec_'+(rr.eid||rr.employeeId||Date.now())+'_'+Math.random().toString(36).slice(2,7));
+    rr.eval=normalizeEvalRecord(rr)||rr.eval||rr.evaluation||null;
+    rr.stageStatus={preCompletedLocal:!!rr.pre,postCompletedLocal:!!rr.post,evalCompletedLocal:!!rr.eval};
+    return rr;
+  }
+  o=o||{};
+  var name=importPick(o,['name','trainee_name','participant','participant_name','employee_name','اسم','الاسم','اسم المتدرب','اسم الموظف','المتدرب','الموظف']);
+  var eid=importPick(o,['eid','employee_id','employeeId','staff_id','staffNo','employee_number','رقم','الرقم الوظيفي','رقم وظيفي','رقم الموظف','الرقم']);
+  var dept=importPick(o,['dept','department','division','unit','الإدارة','الادارة','الدائرة','القسم','الوحدة التنظيمية']);
+  var title=importPick(o,['title','job_title','position','المسمى الوظيفي','الوظيفة','المسمى']);
+  var r={id:'rec_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),name:name,eid:eid,dept:dept,title:title,lastUpdate:importPick(o,['lastUpdate','last_update','updatedAt','تاريخ','تاريخ التحديث'])||new Date().toISOString()};
+
+  var preTotal=importPick(o,['pre_total','preScore','pre_score','before_score','before_total','before','pre','اختبار قبل','قبل','قبل الدورة','قبل الورشة','درجة قبل','درجة الاختبار القبلي','الاختبار القبلي','نتيجة قبل','pretest','pre_test']);
+  var postTotal=importPick(o,['post_total','postScore','post_score','after_score','after_total','after','post','اختبار بعد','بعد','بعد الدورة','بعد الورشة','درجة بعد','درجة الاختبار البعدي','الاختبار البعدي','نتيجة بعد','posttest','post_test']);
+  r.pre=toStageObj(preTotal,importPick(o,['pre_confidence','ثقة قبل','مستوى الثقة قبل']),importPick(o,['pre_open','ملاحظات قبل','إجابة مفتوحة قبل'])) ;
+  r.post=toStageObj(postTotal,importPick(o,['post_confidence','ثقة بعد','مستوى الثقة بعد']),importPick(o,['post_open','ملاحظات بعد','إجابة مفتوحة بعد'])) ;
+
+  Object.keys(o).forEach(function(k){
+    var val=o[k]; if(val===''||val==null)return;
+    var clean=String(k).trim();
+    if(/^pre[_\- ]/i.test(clean)||/^قبل[ _\-]/.test(clean)){
+      if(!/total|score|confidence|open|درجة|نتيجة|ثقة/i.test(clean)){
+        if(!r.pre)r.pre={total:'',secScores:{}};
+        r.pre.secScores[clean.replace(/^pre[_\- ]/i,'').replace(/^قبل[ _\-]/,'').replace(/_/g,' ')]=toNumVal(val)!=null?toNumVal(val):val;
+      }
+    }
+    if(/^post[_\- ]/i.test(clean)||/^بعد[ _\-]/.test(clean)){
+      if(!/total|score|confidence|open|درجة|نتيجة|ثقة/i.test(clean)){
+        if(!r.post)r.post={total:'',secScores:{}};
+        r.post.secScores[clean.replace(/^post[_\- ]/i,'').replace(/^بعد[ _\-]/,'').replace(/_/g,' ')]=toNumVal(val)!=null?toNumVal(val):val;
+      }
+    }
+  });
+  if(r.pre&&typeof r.pre.total==='string'&&r.pre.total==='')delete r.pre;
+  if(r.post&&typeof r.post.total==='string'&&r.post.total==='')delete r.post;
+  if(r.pre&&r.post){var a=Number(r.post.total),b=Number(r.pre.total); if(!isNaN(a)&&!isNaN(b))r.gap=(a-b);} 
+  var gap=importPick(o,['gap','الفجوة','فرق','الفرق','فرق الدرجة']); if(gap!==''&&gap!=null)r.gap=toNumVal(gap)||0;
+
+  var course=importPick(o,['eval_course','course_overall','courseOverall','course_rating','course_stars','stars_course','تقييم الدورة','الدورة','نجوم الدورة','التقييم العام','التقييم العام للدورة','رضا الدورة']);
+  var trAll=importPick(o,['trainer','trainer_overall','trainer_rating','trainer_stars','eval_trainer','تقييم المدرب','المدرب','نجوم المدرب','رضا المدرب']);
+  var tk=importPick(o,['eval_trainer_k','trainer_knowledge','trainerKnowledge','كفاءة المدرب','معرفة المدرب','تمكن المدرب']);
+  var td=importPick(o,['eval_trainer_d','trainer_delivery','trainerDelivery','أسلوب التقديم','اسلوب التقديم','شرح المدرب','تقديم المدرب']);
+  var ti=importPick(o,['eval_trainer_i','trainer_interaction','trainerInteraction','تفاعل المدرب','تفاعل','التفاعل']);
+  var ev={
+    course_overall:toNumVal(course),
+    trainer_knowledge:toNumVal(tk!==''?tk:trAll),
+    trainer_delivery:toNumVal(td!==''?td:trAll),
+    trainer_interaction:toNumVal(ti!==''?ti:trAll),
+    content_quality:toNumVal(importPick(o,['eval_content','content_quality','contentQuality','جودة المحتوى','المحتوى'])),
+    practical_exercises:toNumVal(importPick(o,['eval_practical','practical_exercises','practicalExercises','التطبيق العملي','التمارين العملية','عملي'])),
+    relevance_to_work:toNumVal(importPick(o,['eval_relevance','relevance_to_work','relevanceToWork','الصلة بالعمل','ارتباط بالعمل','ملاءمة للعمل'])),
+    time_management:toNumVal(importPick(o,['eval_time','time_management','timeManagement','إدارة الوقت','ادارة الوقت','الوقت'])),
+    recommend:importPick(o,['eval_recommend','recommend','recommendation','أوصي','اوصي','التوصية','هل توصي']),
+    best_part:importPick(o,['eval_best_part','best_part','bestPart','أفضل جزء','افضل جزء','أفضل جوانب الدورة','افضل جوانب الدورة']),
+    improvement:importPick(o,['eval_improvement','improvement','improvements','مقترحات التحسين','التحسين','اقتراحات'])
+  };
+  Object.keys(ev).forEach(function(k){if(ev[k]===''||ev[k]==null||Number.isNaN(ev[k]))delete ev[k];});
+  if(Object.keys(ev).length)r.eval=Object.assign(ev,{saved:new Date().toISOString(),imported:true});
+  r.stageStatus={preCompletedLocal:!!r.pre,postCompletedLocal:!!r.post,evalCompletedLocal:!!r.eval};
+  return r;
+}
+function mergeImportedEvaluationRecords(list){
+  if(!currentCode){showToast('adm-toast','حمّل جلسة قبل الاستيراد.','ter');return;}
+  var db=getDB();if(!db.records[currentCode])db.records[currentCode]=[];
+  var merged=0;
+  list.map(normalizeImportedEvaluationRecord).filter(function(r){return r.name||r.eid;}).forEach(function(r){
+    r.importedAt=new Date().toISOString();
+    saveTraineeRecord(currentCode,r,true); merged++;
+  });
+  loadSession();
+  showToast('adm-toast','تم استيراد ودمج '+merged+' سجل تقييم مع قبل/بعد/النجوم إن وجدت.','tok');
+}
+function importEvaluationFile(){
+  var inp=document.getElementById('eval-import-file'),f=inp&&inp.files[0]; if(!f)return;
+  var name=f.name.toLowerCase();
+  if(name.endsWith('.csv')){var r=new FileReader();r.onload=function(e){try{mergeImportedEvaluationRecords(csvToObjectsText(e.target.result));}catch(err){showToast('adm-toast','خطأ في قراءة CSV','ter');}};r.readAsText(f,'UTF-8');return;}
+  if(name.endsWith('.xlsx')||name.endsWith('.xls')){if(typeof XLSX==='undefined'){showToast('adm-toast','تعذر تحميل مكتبة XLSX.','ter');return;}var rx=new FileReader();rx.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];mergeImportedEvaluationRecords(XLSX.utils.sheet_to_json(ws,{defval:''}));}catch(err){showToast('adm-toast','خطأ في قراءة XLSX','ter');}};rx.readAsArrayBuffer(f);return;}
+  var rj=new FileReader();rj.onload=function(e){try{var data=JSON.parse(e.target.result);if(Array.isArray(data))mergeImportedEvaluationRecords(data);else if(data.records)mergeImportedEvaluationRecords(Array.isArray(data.records)?data.records:Object.values(data.records).flat());else if(typeof data==='object')mergeImportedEvaluationRecords(Object.values(data));}catch(err){showToast('adm-toast','خطأ في قراءة JSON','ter');}};rj.readAsText(f,'UTF-8');
 }
 
 /* ===================== INIT ===================== */
