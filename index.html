@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026</title>
+<title>منصة تقييم الدورات T3 - حفظ متزامن آمن للمتدربين</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -764,6 +764,9 @@ var SYNC_BUSY = false;
 var SYNC_TIMER = null;
 var LAST_PULL = 0;
 var PULL_BUSY = false;
+var CLIENT_ID_KEY = STORAGE_KEY + '_client_id';
+var CLIENT_ID = localStorage.getItem(CLIENT_ID_KEY) || ('client_' + Date.now() + '_' + Math.random().toString(36).slice(2,10));
+localStorage.setItem(CLIENT_ID_KEY, CLIENT_ID);
 
 /* ===================== STORAGE ===================== */
 function emptyDB(){return {sessions:{},records:{},banks:{}};}
@@ -784,7 +787,7 @@ function localSetDB(d){
   }
 }
 function getOutbox(){return safeParseJSON(localStorage.getItem(OUTBOX_KEY)||'[]',[]);}
-function setOutbox(q){try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(q.slice(-20)));}catch(e){console.warn(e);}}
+function setOutbox(q){try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(q.slice(-200)));}catch(e){console.warn(e);}}
 function postCentralAsync(payload,timeoutMs){
   timeoutMs=timeoutMs||9000;
   return new Promise(function(resolve){
@@ -832,10 +835,38 @@ function setDB(d){
 function queueCentralSave(d){
   if(!CENTRAL_STORAGE_ENABLED)return;
   var q=getOutbox();
-  // نحتفظ بآخر نسخة كاملة فقط لتقليل الضغط على Google Sheet
-  q=[{action:'setDB',db:normalizeDB(d),updatedAt:new Date().toISOString(),client:'offline-first-v2'}];
-  setOutbox(q);
+  q.push({type:'setDB',action:'setDB',db:normalizeDB(d),updatedAt:new Date().toISOString(),client:CLIENT_ID});
+  setOutbox(q.slice(-50));
   scheduleFlush(1500);
+}
+function recordKey(code,rec){return String(code||'')+'__'+String((rec&&rec.eid)||(rec&&rec.id)||(rec&&rec.name)||'');}
+function queueRecordUpsert(code,rec,urgent){
+  if(!CENTRAL_STORAGE_ENABLED||!code||!rec)return;
+  var q=getOutbox().filter(function(x){return !(x.type==='record' && x.key===recordKey(code,rec));});
+  q.push({type:'record',action:'upsertRecord',key:recordKey(code,rec),code:code,record:rec,updatedAt:new Date().toISOString(),client:CLIENT_ID});
+  setOutbox(q);
+  scheduleFlush(urgent?100:1200);
+}
+function saveTraineeRecord(code,rec,urgent){
+  var db=getDB();
+  if(!db.records[code])db.records[code]=[];
+  var idx=db.records[code].findIndex(function(r){return (rec.id&&r.id===rec.id)||(rec.eid&&String(r.eid).toLowerCase()===String(rec.eid).toLowerCase());});
+  rec.lastUpdate=new Date().toISOString();
+  rec.clientId=CLIENT_ID;
+  if(idx>=0)db.records[code][idx]=rec;else db.records[code].push(rec);
+  DB_CACHE=db;
+  localSetDB(db);
+  queueRecordUpsert(code,rec,urgent);
+  setStatus('تم الحفظ محلياً فوراً — لن يتوقف انتقالك بسبب Google Sheet','#0F6E56');
+}
+function mergeRecordIntoDB(db,code,rec){
+  db=normalizeDB(db);
+  if(!db.records[code])db.records[code]=[];
+  var idx=db.records[code].findIndex(function(r){return (rec.id&&r.id===rec.id)||(rec.eid&&String(r.eid).toLowerCase()===String(rec.eid).toLowerCase());});
+  if(idx>=0){
+    if(recordTimeKey(rec)>=recordTimeKey(db.records[code][idx]))db.records[code][idx]=rec;
+  }else db.records[code].push(rec);
+  return db;
 }
 function scheduleFlush(delay){
   if(!CENTRAL_STORAGE_ENABLED)return;
@@ -847,11 +878,40 @@ function flushOutbox(){
   var q=getOutbox();
   if(!q.length)return;
   SYNC_BUSY=true;
-  setStatus('جاري مزامنة النسخة المركزية...','#C0A500');
-  postCentralAsync(q[q.length-1],10000).then(function(res){
-    SYNC_BUSY=false;
-    if(res&&res.ok===true){setOutbox([]);setStatus('تمت المزامنة المركزية بنجاح','#28A745');}
-    else{setStatus('الحفظ المركزي مؤجل — بياناتك محفوظة محلياً','#A32D2D');scheduleFlush(12000);}
+  setStatus('جاري مزامنة العناصر غير المرسلة: '+q.length,'#C0A500');
+  var batch={action:'batchUpsertRecords',items:q.filter(function(x){return x.type==='record';}),client:CLIENT_ID,updatedAt:new Date().toISOString()};
+  var full=q.filter(function(x){return x.type!=='record';}).slice(-1)[0];
+  var payload=batch.items.length?batch:full;
+  postCentralAsync(payload,10000).then(function(res){
+    if(res&&res.ok===true){
+      if(batch.items.length){setOutbox(q.filter(function(x){return x.type!=='record';}));}
+      else{setOutbox([]);}
+      SYNC_BUSY=false;
+      setStatus('تمت مزامنة السجلات المركزية بنجاح','#28A745');
+      if(getOutbox().length)scheduleFlush(600);
+      return;
+    }
+    // توافق خلفي: إذا لم يدعم Apps Script الحفظ الجزئي، ندمج السجلات محلياً مع آخر نسخة مركزية ثم نرفع نسخة مدمجة.
+    if(batch.items.length){
+      postCentralAsync({action:'getDB'},8000).then(function(remoteRes){
+        var db=remoteRes?normalizeDB(remoteRes.db||remoteRes):localGetDB();
+        batch.items.forEach(function(it){db=mergeRecordIntoDB(db,it.code,it.record);});
+        postCentralAsync({action:'setDB',db:db,client:CLIENT_ID,updatedAt:new Date().toISOString(),mode:'merged-record-fallback'},12000).then(function(r2){
+          SYNC_BUSY=false;
+          if(r2&&r2.ok===true){
+            DB_CACHE=mergeDB(localGetDB(),db);localSetDB(DB_CACHE);
+            setOutbox(q.filter(function(x){return x.type!=='record';}));
+            setStatus('تمت المزامنة المركزية بطريقة الدمج الآمن','#28A745');
+            if(getOutbox().length)scheduleFlush(600);
+          }else{
+            setStatus('المزامنة مؤجلة — بيانات المتدرب محفوظة محلياً ولن تضيع','#A32D2D');scheduleFlush(12000);
+          }
+        });
+      });
+    }else{
+      SYNC_BUSY=false;
+      setStatus('الحفظ المركزي مؤجل — البيانات محفوظة محلياً','#A32D2D');scheduleFlush(12000);
+    }
   });
 }
 function backgroundPull(force,cb){
@@ -1732,14 +1792,14 @@ function trRegister(){
   var existing=null;
   for(var i=0;i<db.records[code].length;i++){if(db.records[code][i].eid===eid||db.records[code][i].name===name){existing=db.records[code][i];break;}}
   var rec=existing||{id:Date.now(),name:name,eid:eid,dept:dept,title:document.getElementById('tr-title').value.trim(),pre:null,post:null,gap:null,eval:null,lastUpdate:new Date().toISOString()};
-  if(!existing){db.records[code].push(rec);setDB(db);}
+  if(!existing){saveTraineeRecord(code,rec,true);}
   tr.rec=rec;hide('tr-s2');startMode('pre');
 }
 
 function showResume(code,sess,rec){
   var ini=rec.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
   document.getElementById('resume-banner').innerHTML='<div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:50%;background:#003087;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">'+ini+'</div><div><div style="font-size:14px;font-weight:700;color:#003087">'+rec.name+'</div><div style="font-size:12px;color:#555">'+rec.dept+' · '+sess.batch+'</div></div><div style="margin-right:auto;font-size:12px;color:#888">رمز: <strong>'+code+'</strong></div></div>';
-  var hasPre=rec.pre!=null,hasPost=rec.post!=null,hasEval=rec.eval!=null;
+  var hasPre=(rec.pre!=null)||(rec.stageStatus&&rec.stageStatus.preCompletedLocal),hasPost=(rec.post!=null)||(rec.stageStatus&&rec.stageStatus.postCompletedLocal),hasEval=(rec.eval!=null)||(rec.stageStatus&&rec.stageStatus.evalCompletedLocal);
   if(hasPre){document.getElementById('si-pre').style.background='#EAF5EE';document.getElementById('si-pre').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-pre').textContent='الدرجة: '+rec.pre.total+'%';document.getElementById('bdg-pre').className='bdg b1';document.getElementById('bdg-pre').textContent='مكتمل';document.getElementById('sr-pre').style.background='#F0FAF4';}
   else{document.getElementById('si-pre').style.background='#003087';document.getElementById('si-pre').innerHTML='<i class="ti ti-player-play" style="color:#fff"></i>';document.getElementById('sub-pre').textContent='لم تبدأ بعد';document.getElementById('bdg-pre').className='bdg b3';document.getElementById('bdg-pre').textContent='لم يبدأ';}
   if(hasPost){document.getElementById('si-post').style.background='#EAF5EE';document.getElementById('si-post').innerHTML='<i class="ti ti-check" style="color:#1D6F42"></i>';document.getElementById('sub-post').textContent='الدرجة: '+rec.post.total+'% · فجوة: '+(rec.gap>=0?'+':'')+rec.gap+' نقطة';document.getElementById('bdg-post').className='bdg b1';document.getElementById('bdg-post').textContent='مكتمل';document.getElementById('sr-post').style.background='#F0FAF4';}
@@ -1833,12 +1893,10 @@ function finishTest(){
   var rec=tr.rec,code=tr.code,mode=tr.mode;
   if(mode==='pre')rec.pre=sc;
   else{rec.post=sc;if(rec.pre)rec.gap=sc.total-rec.pre.total;}
-  rec.lastUpdate=new Date().toISOString();
-  var db=getDB();
-  if(!db.records[code])db.records[code]=[];
-  var idx=db.records[code].findIndex(function(r){return r.id===rec.id;});
-  if(idx>=0)db.records[code][idx]=rec;else db.records[code].push(rec);
-  setDB(db);
+  rec.stageStatus=rec.stageStatus||{};
+  if(mode==='pre')rec.stageStatus.preCompletedLocal=true;
+  if(mode==='post')rec.stageStatus.postCompletedLocal=true;
+  saveTraineeRecord(code,rec,true);
   clearProgressDraft();
   document.getElementById('tr-qa').style.display='none';
   document.getElementById('tr-nav').style.display='none';
@@ -1849,7 +1907,8 @@ function finishTest(){
   var ml=mode==='pre'?'قبل الورشة':'بعد الورشة';
   var html='<div style="background:#F8FAFD;border:1px solid #E0E8F0;border-radius:14px;padding:20px;text-align:center;margin-bottom:14px"><div style="font-size:52px;font-weight:800;color:#003087">'+sc.total+'%</div><div style="font-size:13px;color:#888;margin:4px 0">'+sc.correct+' من '+sc.total_q+' سؤال صحيح — '+ml+'</div><span style="font-size:13px;font-weight:700;background:'+g[2]+';color:'+g[1]+';padding:4px 16px;border-radius:6px">'+g[0]+'</span></div>'
     +(secList.length?'<div style="background:#fff;border:1px solid #E0E8F0;border-radius:12px;padding:14px;margin-bottom:14px"><div style="font-size:13px;font-weight:700;color:#003087;margin-bottom:10px">الأداء حسب المحور</div>'+sr+'</div>':'');
-  if(mode==='pre'){html+='<div style="background:#D0E4FB;border-radius:10px;padding:12px 14px;font-size:13px;color:#003087;border:1px solid #B5D4F4"><i class="ti ti-calendar"></i> بعد انتهاء الورشة عُد وأدخل الرمز <strong>'+code+'</strong> ورقمك الوظيفي لأداء اختبار "بعد".</div>';}
+  if(mode==='pre'){html+='<div style="background:#EAF5EE;border-radius:10px;padding:12px 14px;font-size:13px;color:#155724;border:1px solid #A8D8B8;margin-bottom:10px"><i class="ti ti-device-floppy"></i> تم اعتماد الاختبار القبلي محلياً فوراً. يمكنك متابعة المراحل دون انتظار تحديث Google Sheet.</div><button class="bp bpg bp-full" onclick="startMode(&quot;post&quot;)"><i class="ti ti-player-play"></i> ابدأ الاختبار البعدي الآن</button><button class="bs bp-full" onclick="hide(&quot;tr-s4&quot;);showResume(tr.code,(getDB().sessions||{})[tr.code],tr.rec)"><i class="ti ti-list-check"></i> عرض صفحة المراحل</button>';}
+
   else{html+='<button class="bp bpp bp-full" onclick="goEval()"><i class="ti ti-star"></i> انتقل لتقييم الدورة والمدرب &#8592;</button>';}
   rDiv.innerHTML=html;
 }
@@ -1892,11 +1951,9 @@ function saveEval(){
   if(!tr.ev.course_overall){showToast('tr-toast','يرجى تقييم الدورة بالنجوم أولاً.','ter');return;}
   var rec=tr.rec,code=tr.code;
   rec.eval=Object.assign({},tr.ev,{saved:new Date().toISOString()});
-  rec.lastUpdate=new Date().toISOString();
-  var db=getDB();
-  var idx=db.records[code].findIndex(function(r){return r.id===rec.id;});
-  if(idx>=0)db.records[code][idx]=rec;
-  setDB(db);
+  rec.stageStatus=rec.stageStatus||{};
+  rec.stageStatus.evalCompletedLocal=true;
+  saveTraineeRecord(code,rec,true);
   clearProgressDraft();
   hide('eval-form');document.getElementById('btn-eval').style.display='none';
   document.getElementById('eval-done').innerHTML='<div style="background:#EAF5EE;border:1px solid #A8D8B8;border-radius:14px;padding:24px;text-align:center;margin-top:8px"><i class="ti ti-trophy" style="font-size:40px;color:#1D6F42;display:block;margin-bottom:10px"></i><div style="font-size:17px;font-weight:700;color:#155724;margin-bottom:5px">شكراً '+rec.name+'!</div><div style="font-size:13px;color:#0A5240;margin-bottom:16px">تم حفظ اختبارَيك وتقييم الدورة بنجاح</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.pre?rec.pre.total+'%':'—')+'</div><div style="font-size:12px;color:#888">قبل</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.post?rec.post.total+'%':'—')+'</div><div style="font-size:12px;color:#888">بعد</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:700;color:'+(rec.gap>=0?'#1D6F42':'#A32D2D')+'">'+(rec.gap!=null?(rec.gap>=0?'+':'')+rec.gap+' نقطة':'—')+'</div><div style="font-size:12px;color:#888">الفجوة</div></div></div></div>';
