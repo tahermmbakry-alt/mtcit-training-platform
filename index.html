@@ -161,6 +161,21 @@ tr:hover td{background:#F8FAFD}
 .import-panel{background:#F8FAFD;border:1px dashed #B5D4F4;border-radius:12px;padding:12px;margin-top:12px}
 @media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}.sec-grid{grid-template-columns:1fr}}
 
+
+/* Professional Notification Center */
+.notify-stack{position:fixed;top:88px;left:18px;z-index:900;display:flex;flex-direction:column;gap:10px;max-width:min(430px,calc(100vw - 36px));pointer-events:none}
+.notify-card{pointer-events:auto;background:#fff;border:1px solid #E0E8F0;border-right:5px solid #003087;border-radius:14px;padding:12px 14px;box-shadow:0 18px 45px rgba(15,23,42,.18);display:flex;align-items:flex-start;gap:10px;animation:notifyIn .22s ease both;direction:rtl}
+.notify-card.hide{animation:notifyOut .18s ease both}
+.notify-icon{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:18px}
+.notify-body{flex:1;min-width:0}.notify-title{font-size:12px;font-weight:900;color:#111827;margin-bottom:2px}.notify-msg{font-size:12px;color:#4B5563;line-height:1.55;word-break:break-word}.notify-close{border:0;background:transparent;color:#94A3B8;font-size:17px;cursor:pointer;padding:0 2px;line-height:1}
+.notify-success{border-right-color:#1D6F42}.notify-success .notify-icon{background:#1D6F42}
+.notify-error{border-right-color:#A32D2D}.notify-error .notify-icon{background:#A32D2D}
+.notify-warning{border-right-color:#C07A00}.notify-warning .notify-icon{background:#C07A00}
+.notify-info{border-right-color:#003087}.notify-info .notify-icon{background:#003087}
+@keyframes notifyIn{from{opacity:0;transform:translateX(-18px) translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes notifyOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-18px) translateY(-6px)}}
+@media(max-width:600px){.notify-stack{top:76px;left:10px;right:10px;max-width:none}.notify-card{padding:11px 12px}}
+
 </style>
 </head>
 <body>
@@ -182,6 +197,7 @@ tr:hover td{background:#F8FAFD}
   <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
   <span id="stxt">جاهز</span><button class="bs" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="flushOutbox();backgroundPull(true)"><i class="ti ti-refresh"></i> مزامنة</button>
 </div>
+<div id="notify-stack" class="notify-stack" aria-live="polite" aria-atomic="false"></div>
 <div class="content">
 
 
@@ -272,8 +288,8 @@ tr:hover td{background:#F8FAFD}
       <thead><tr>
         <th style="width:14%">الاسم</th><th style="width:12%">الرقم الوظيفي</th><th style="width:12%">الإدارة</th>
         <th style="width:7%">قبل</th><th style="width:7%">بعد</th><th style="width:8%">فجوة</th>
-        <th style="width:9%">الدورة</th><th style="width:9%">المدرب</th>
-        <th style="width:10%">الحالة</th><th style="width:12%">تاريخ</th>
+        <th style="width:8%">الدورة</th><th style="width:8%">المدرب</th>
+        <th style="width:9%">الحالة</th><th style="width:10%">تاريخ</th><th style="width:9%">إجراء</th>
       </tr></thead>
       <tbody id="adm-tbody"></tbody>
     </table></div>
@@ -979,7 +995,27 @@ window.addEventListener('online',function(){setStatus('عاد الاتصال —
 window.addEventListener('beforeunload',function(){try{flushOutbox();}catch(e){}});
 /* ===================== UTILS ===================== */
 function setStatus(m,c){document.getElementById('stxt').textContent=m;document.getElementById('sdot').style.background=c||'#28A745';}
-function showToast(id,m,t){var e=document.getElementById(id);e.className='toast '+t;e.textContent=m;setTimeout(function(){e.style.display='none';e.className='toast';},5000);}
+function notifyTypeFromLegacy(t){return t==='tok'?'success':t==='ter'?'error':t==='tin'?'info':t==='twarn'?'warning':(t||'info');}
+function notifyTitle(type){return type==='success'?'تمت العملية بنجاح':type==='error'?'تعذر تنفيذ العملية':type==='warning'?'تنبيه':'معلومة';}
+function notifyIcon(type){return type==='success'?'ti-circle-check':type==='error'?'ti-alert-triangle':type==='warning'?'ti-alert-circle':'ti-info-circle';}
+function notify(m,type,ttl){
+  type=notifyTypeFromLegacy(type); ttl=ttl||notifyTitle(type);
+  var stack=document.getElementById('notify-stack'); if(!stack){return;}
+  var card=document.createElement('div');
+  card.className='notify-card notify-'+type;
+  card.innerHTML='<div class="notify-icon"><i class="ti '+notifyIcon(type)+'"></i></div><div class="notify-body"><div class="notify-title">'+safeNotify(ttl)+'</div><div class="notify-msg">'+safeNotify(m)+'</div></div><button class="notify-close" type="button" aria-label="إغلاق" onclick="dismissNotify(this)"><i class="ti ti-x"></i></button>';
+  stack.prepend(card);
+  while(stack.children.length>5){stack.removeChild(stack.lastElementChild);}
+  setTimeout(function(){dismissNotify(card);}, type==='error'?6500:4200);
+}
+function dismissNotify(x){var card=x&&x.classList&&x.classList.contains('notify-card')?x:(x?x.closest('.notify-card'):null); if(!card)return; card.classList.add('hide'); setTimeout(function(){if(card&&card.parentNode)card.parentNode.removeChild(card);},220);}
+function safeNotify(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function showToast(id,m,t){
+  var type=notifyTypeFromLegacy(t);
+  var e=document.getElementById(id);
+  if(e){e.className='toast '+t;e.textContent=m;e.style.display='block';setTimeout(function(){e.style.display='none';e.className='toast';},5000);}
+  notify(m,type);
+}
 function genCode(){var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s='';for(var i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s;}
 function genId(){return 'bk_'+Date.now()+'_'+Math.floor(Math.random()*9999);}
 function avg(a){var f=a.filter(function(x){return x!=null&&x>0;});return f.length?f.reduce(function(s,v){return s+v;},0)/f.length:0;}
@@ -1092,7 +1128,7 @@ function renderBanksList(){
       +'<button class="bs" onclick="exportBank(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-download"></i> JSON</button>'
       +'<button class="bs" onclick="exportBankCSV(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-table-export"></i> CSV</button>'
       +'<button class="bs" onclick="exportBankXLSX(\''+b.id+'\')" style="font-size:12px"><i class="ti ti-file-spreadsheet"></i> XLSX</button>'
-      +(b.isDefault?'':'<button class="bp bpr" onclick="deleteBank(\''+b.id+'\')" style="flex:0;padding:7px 12px;font-size:12px"><i class="ti ti-trash"></i></button>')
+      +'<button class="bp bpr" onclick="deleteBank(\''+b.id+'\')" style="flex:0;padding:7px 12px;font-size:12px" title="حذف بنك الأسئلة"><i class="ti ti-trash"></i> حذف</button>'
       +'</div></div>';
   }).join('');
 }
@@ -1246,6 +1282,7 @@ function deleteQuestion(idx){
   db.banks[currentBankId].questions.splice(idx,1);
   setDB(db);
   renderBankEditor(currentBankId);
+  showToast('qb-toast','تم حذف السؤال بنجاح.','tok');
 }
 
 function moveQ(idx,dir){
@@ -1256,6 +1293,7 @@ function moveQ(idx,dir){
   var tmp=qs[idx];qs[idx]=qs[ni];qs[ni]=tmp;
   setDB(db);
   renderBankEditor(currentBankId);
+  showToast('qb-toast','تم تعديل ترتيب السؤال.','tok');
 }
 
 function duplicateBank(id){
@@ -1270,11 +1308,23 @@ function duplicateBank(id){
 }
 
 function deleteBank(id){
-  if(!confirm('حذف هذا البنك نهائياً؟'))return;
   var db=getDB();
+  var bank=db.banks&&db.banks[id];
+  if(!bank){showToast('qb-toast','لم يتم العثور على بنك الأسئلة.','ter');return;}
+  var used=[];
+  Object.keys(db.sessions||{}).forEach(function(code){
+    if(db.sessions[code]&&db.sessions[code].bankId===id)used.push(code);
+  });
+  var msg='حذف بنك الأسئلة: '+(bank.name||'')+'؟\n\nسيتم حذف البنك نهائياً من هذا الملف.';
+  if(used.length){
+    msg+='\n\nتنبيه: هذا البنك مرتبط بعدد '+used.length+' جلسة. لن يتم حذف سجلات التقييم، لكن لن يمكن إعادة استخدام أسئلة هذا البنك لتلك الجلسات إلا إذا كانت محفوظة داخل السجلات.';
+  }
+  if(!confirm(msg))return;
   delete db.banks[id];
   setDB(db);
+  populateBankSelect();
   renderBanksList();
+  showToast('qb-toast','تم حذف بنك الأسئلة بنجاح.','tok');
 }
 
 function exportBank(id){
@@ -1283,6 +1333,7 @@ function exportBank(id){
   var blob=new Blob([JSON.stringify(b,null,2)],{type:'application/json'});
   var u=URL.createObjectURL(blob);var a=document.createElement('a');
   a.href=u;a.download=b.name.replace(/\s+/g,'_')+'.json';a.click();URL.revokeObjectURL(u);
+  showToast('qb-toast','تم تصدير بنك الأسئلة JSON.','tok');
 }
 
 function exportAllBanks(){
@@ -1290,6 +1341,7 @@ function exportAllBanks(){
   var blob=new Blob([JSON.stringify(db.banks,null,2)],{type:'application/json'});
   var u=URL.createObjectURL(blob);var a=document.createElement('a');
   a.href=u;a.download='MTCIT_MBO_KPI_QBanks_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);
+  showToast('qb-toast','تم تصدير جميع بنوك الأسئلة JSON.','tok');
 }
 
 
@@ -1780,11 +1832,35 @@ function renderEvalSummary(evals){
 }
 
 function safeTxt(v){return (v==null||v==='')?'—':String(v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function recordKeyForDelete(r,i){
+  r=r||{};
+  return encodeURIComponent(r.id||r.eid||r.employeeId||r.name||String(i));
+}
+function deleteEvaluationRecord(key){
+  if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
+  var db=getDB();
+  var recs=(db.records&&db.records[currentCode])||[];
+  var raw=decodeURIComponent(String(key||''));
+  var idx=recs.findIndex(function(r){
+    return String(r.id||'')===raw || String(r.eid||'')===raw || String(r.employeeId||'')===raw || String(r.name||'')===raw;
+  });
+  if(idx<0){showToast('adm-toast','لم يتم العثور على سجل التقييم المحدد.','ter');return;}
+  var r=recs[idx]||{};
+  var label=(r.name||'متدرب')+(r.eid?' - '+r.eid:'');
+  if(!confirm('حذف سجل التقييم المحدد؟\n\n'+label+'\n\nسيتم حذف نتيجة قبل/بعد الدورة وتقييم الدورة والمدرب لهذا السجل فقط.'))return;
+  recs.splice(idx,1);
+  if(!db.records)db.records={};
+  db.records[currentCode]=recs;
+  setDB(db);
+  localStorage.setItem('mtcit_last_deleted_record',JSON.stringify({code:currentCode,record:r,deletedAt:new Date().toISOString()}));
+  loadSession();
+  showToast('adm-toast','تم حذف سجل التقييم المحدد.','tok');
+}
 function renderTable(recs){
   var tbody=document.getElementById('adm-tbody');
   if(!tbody)return;
-  if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
-  tbody.innerHTML=recs.map(function(r){
+  if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
+  tbody.innerHTML=recs.map(function(r,i){
     r=r||{};
     var pre=(r.pre&&r.pre.total!=null)?r.pre.total+'%':'—';
     var post=(r.post&&r.post.total!=null)?r.post.total+'%':'—';
@@ -1799,7 +1875,8 @@ function renderTable(recs){
     var name=safeTxt(r.name);
     var eid=safeTxt(r.eid);
     var dept=safeTxt(r.dept).replace('دائرة ','');
-    return '<tr><td title="'+name+'">'+name+'</td><td title="'+eid+'" style="font-weight:600;color:#003087">'+eid+'</td><td>'+dept+'</td><td>'+pre+'</td><td>'+post+'</td><td><span class="bdg '+gb+'">'+gap+'</span></td><td>'+ce+'</td><td>'+te+'</td><td>'+st+'</td><td style="font-size:11px;color:#888">'+d+'</td></tr>';
+    var delKey=recordKeyForDelete(r,i);
+    return '<tr><td title="'+name+'">'+name+'</td><td title="'+eid+'" style="font-weight:600;color:#003087">'+eid+'</td><td>'+dept+'</td><td>'+pre+'</td><td>'+post+'</td><td><span class="bdg '+gb+'">'+gap+'</span></td><td>'+ce+'</td><td>'+te+'</td><td>'+st+'</td><td style="font-size:11px;color:#888">'+d+'</td><td><button class="bs" style="padding:5px 8px;font-size:11px;color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="deleteEvaluationRecord(&quot;'+delKey+'&quot;)" title="حذف هذا التقييم"><i class="ti ti-trash"></i> حذف</button></td></tr>';
   }).join('');
 }
 
@@ -1978,6 +2055,7 @@ function finishTest(){
   if(mode==='pre')rec.stageStatus.preCompletedLocal=true;
   if(mode==='post')rec.stageStatus.postCompletedLocal=true;
   saveTraineeRecord(code,rec,true);
+  showToast('tr-toast',mode==='pre'?'تم حفظ الاختبار القبلي محلياً وجاري المزامنة.':'تم حفظ الاختبار البعدي محلياً وجاري المزامنة.','tok');
   clearProgressDraft();
   document.getElementById('tr-qa').style.display='none';
   document.getElementById('tr-nav').style.display='none';
@@ -2035,6 +2113,7 @@ function saveEval(){
   rec.stageStatus=rec.stageStatus||{};
   rec.stageStatus.evalCompletedLocal=true;
   saveTraineeRecord(code,rec,true);
+  showToast('tr-toast','تم حفظ تقييم الدورة والمدرب محلياً وجاري المزامنة.','tok');
   clearProgressDraft();
   hide('eval-form');document.getElementById('btn-eval').style.display='none';
   document.getElementById('eval-done').innerHTML='<div style="background:#EAF5EE;border:1px solid #A8D8B8;border-radius:14px;padding:24px;text-align:center;margin-top:8px"><i class="ti ti-trophy" style="font-size:40px;color:#1D6F42;display:block;margin-bottom:10px"></i><div style="font-size:17px;font-weight:700;color:#155724;margin-bottom:5px">شكراً '+rec.name+'!</div><div style="font-size:13px;color:#0A5240;margin-bottom:16px">تم حفظ اختبارَيك وتقييم الدورة بنجاح</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.pre?rec.pre.total+'%':'—')+'</div><div style="font-size:12px;color:#888">قبل</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:20px;font-weight:700;color:#003087">'+(rec.post?rec.post.total+'%':'—')+'</div><div style="font-size:12px;color:#888">بعد</div></div><div style="background:#fff;border-radius:10px;padding:12px"><div style="font-size:18px;font-weight:700;color:'+(rec.gap>=0?'#1D6F42':'#A32D2D')+'">'+(rec.gap!=null?(rec.gap>=0?'+':'')+rec.gap+' نقطة':'—')+'</div><div style="font-size:12px;color:#888">الفجوة</div></div></div></div>';
