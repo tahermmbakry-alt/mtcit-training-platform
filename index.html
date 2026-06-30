@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>منصة تقييم الدورات T3 - حفظ متزامن آمن للمتدربين</title>
+<title>Workshops Evaluation V4 - حفظ متزامن آمن للمتدربين</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -66,6 +66,28 @@ th{background:#003087;color:#fff;padding:10px;text-align:right;font-weight:700}
 td{padding:8px 10px;border-bottom:1px solid #F0F4FA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#F8FAFD}
+/* Trainees records table - compact fit-to-content view */
+.tw:has(.trainees-table){overflow-x:auto}
+.trainees-table{width:max-content;min-width:0;table-layout:auto;border-collapse:collapse;font-size:11px}
+.trainees-table th,.trainees-table td{vertical-align:middle;line-height:1.25;padding:4px 5px;white-space:nowrap;overflow:visible;text-overflow:clip}
+.trainees-table th{color:#fff;background:#003087;text-align:center;font-weight:800}
+.trainees-table td{color:#1A1A2E;background:#fff}
+.trainees-table tr:hover td{background:#F8FAFD}
+.trainees-table .col-no{width:1%;text-align:center;font-weight:900;color:#003087;background:#F8FAFD}
+.trainees-table th.col-no{color:#fff;background:#003087}
+.trainees-table .col-name{width:1%;font-weight:700;max-width:none}
+.trainees-table .col-eid{width:1%;font-weight:800;color:#111827;background:#fff}
+.trainees-table th.col-eid{color:#fff;background:#003087}
+.trainees-table .col-dept{width:1%;max-width:none}
+.trainees-table .col-score{width:1%;text-align:center}
+.trainees-table .col-stars{width:1%;text-align:center;min-width:74px}
+.trainees-table .col-status{width:1%;text-align:center}
+.trainees-table .col-date{width:1%;text-align:center;font-size:10.5px;color:#374151}
+.trainees-table .col-action{width:1%;text-align:center}
+.trainees-table .bdg{padding:2px 5px;font-size:10px}
+.trainees-table .bs{padding:3px 6px!important;font-size:10px!important}
+.other-dept-wrap{display:none;margin-top:8px}
+.other-dept-wrap.show{display:block}
 .pbwrap{background:#F0F4FA;padding:10px 18px 6px}
 .pbrow{display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:5px}
 .pbtr{height:5px;background:#E0E8F0;border-radius:3px;overflow:hidden;margin-bottom:8px}
@@ -177,7 +199,7 @@ tr:hover td{background:#F8FAFD}
 @media(max-width:600px){.notify-stack{top:76px;left:10px;right:10px;max-width:none}.notify-card{padding:11px 12px}}
 
 </style>
-</head>
+<style>#traineesTable{width:max-content;min-width:100%}#traineesTable th,#traineesTable td{min-width:150px;white-space:nowrap}#traineesTable th:first-child,#traineesTable td:first-child{min-width:60px}</style></head>
 <body>
 <div class="app">
 <div class="topbar">
@@ -284,12 +306,12 @@ tr:hover td{background:#F8FAFD}
         <button class="bs" style="color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="clearCurrentSessionRecords()"><i class="ti ti-trash"></i> حذف بيانات الدورة الحالية</button>
       </div>
     </div>
-    <div class="tw"><table>
+    <div class="tw"><table class="trainees-table">
       <thead><tr>
-        <th style="width:14%">الاسم</th><th style="width:12%">الرقم الوظيفي</th><th style="width:12%">الإدارة</th>
-        <th style="width:7%">قبل</th><th style="width:7%">بعد</th><th style="width:8%">فجوة</th>
-        <th style="width:8%">الدورة</th><th style="width:8%">المدرب</th>
-        <th style="width:9%">الحالة</th><th style="width:10%">تاريخ</th><th style="width:9%">إجراء</th>
+        <th class="col-no">م</th><th class="col-name">الاسم</th><th class="col-eid">الرقم الوظيفي</th><th class="col-dept">الإدارة</th>
+        <th class="col-score">قبل</th><th class="col-score">بعد</th><th class="col-score">فجوة</th>
+        <th class="col-stars">الدورة</th><th class="col-stars">المدرب</th>
+        <th class="col-status">الحالة</th><th class="col-date">تاريخ</th><th class="col-action">إجراء</th>
       </tr></thead>
       <tbody id="adm-tbody"></tbody>
     </table></div>
@@ -390,14 +412,17 @@ tr:hover td{background:#F8FAFD}
       </div>
       <div class="r2">
         <div><div class="lbl"><span class="req">*</span>الإدارة</div>
-          <select id="tr-dept">
+          <select id="tr-dept" onchange="toggleOtherDept()">
             <option value="">— اختر —</option>
             <option>دائرة التحول الرقمي</option><option>دائرة الخدمات الرقمية</option>
             <option>دائرة البنية التحتية</option><option>دائرة الأمن السيبراني</option>
             <option>دائرة مشاريع الطرق</option><option>دائرة النقل البري</option>
             <option>دائرة النقل البحري</option><option>الإدارة المالية</option>
             <option>الموارد البشرية</option><option>أخرى</option>
-          </select></div>
+          </select>
+          <div id="tr-other-dept-wrap" class="other-dept-wrap">
+            <input type="text" id="tr-other-dept" placeholder="اكتب اسم الدائرة / الإدارة الأخرى">
+          </div></div>
         <div><div class="lbl">المسمى الوظيفي</div><input type="text" id="tr-title" placeholder="مدير مشاريع"></div>
       </div>
       <button class="bp bp-full" onclick="trRegister()"><i class="ti ti-player-play"></i> تأكيد وبدء الاختبار</button>
@@ -1859,7 +1884,7 @@ function deleteEvaluationRecord(key){
 function renderTable(recs){
   var tbody=document.getElementById('adm-tbody');
   if(!tbody)return;
-  if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
+  if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
   tbody.innerHTML=recs.map(function(r,i){
     r=r||{};
     var pre=(r.pre&&r.pre.total!=null)?r.pre.total+'%':'—';
@@ -1876,7 +1901,7 @@ function renderTable(recs){
     var eid=safeTxt(r.eid);
     var dept=safeTxt(r.dept).replace('دائرة ','');
     var delKey=recordKeyForDelete(r,i);
-    return '<tr><td title="'+name+'">'+name+'</td><td title="'+eid+'" style="font-weight:600;color:#003087">'+eid+'</td><td>'+dept+'</td><td>'+pre+'</td><td>'+post+'</td><td><span class="bdg '+gb+'">'+gap+'</span></td><td>'+ce+'</td><td>'+te+'</td><td>'+st+'</td><td style="font-size:11px;color:#888">'+d+'</td><td><button class="bs" style="padding:5px 8px;font-size:11px;color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="deleteEvaluationRecord(&quot;'+delKey+'&quot;)" title="حذف هذا التقييم"><i class="ti ti-trash"></i> حذف</button></td></tr>';
+    return '<tr><td class="col-no">'+(i+1)+'</td><td class="col-name" title="'+name+'">'+name+'</td><td class="col-eid" title="'+eid+'">'+eid+'</td><td class="col-dept">'+dept+'</td><td class="col-score">'+pre+'</td><td class="col-score">'+post+'</td><td class="col-score"><span class="bdg '+gb+'">'+gap+'</span></td><td class="col-stars">'+ce+'</td><td class="col-stars">'+te+'</td><td class="col-status">'+st+'</td><td class="col-date">'+d+'</td><td class="col-action"><button class="bs" style="padding:5px 8px;font-size:11px;color:#A32D2D;border-color:#F0B4BA;background:#FFF5F5" onclick="deleteEvaluationRecord(&quot;'+delKey+'&quot;)" title="حذف هذا التقييم"><i class="ti ti-trash"></i> حذف</button></td></tr>';
   }).join('');
 }
 
@@ -1940,11 +1965,31 @@ function trJoin(){
   show('tr-s2');
 }
 
+function toggleOtherDept(){
+  var sel=document.getElementById('tr-dept');
+  var wrap=document.getElementById('tr-other-dept-wrap');
+  var input=document.getElementById('tr-other-dept');
+  if(!sel||!wrap)return;
+  var isOther=sel.value==='أخرى';
+  wrap.classList.toggle('show',isOther);
+  if(isOther&&input)setTimeout(function(){input.focus();},50);
+  if(!isOther&&input)input.value='';
+}
+function getSelectedDept(){
+  var sel=document.getElementById('tr-dept');
+  var other=document.getElementById('tr-other-dept');
+  var dept=sel?sel.value:'';
+  if(dept==='أخرى'){
+    var v=other?other.value.trim():'';
+    return v||'';
+  }
+  return dept;
+}
 function trRegister(){
   var name=document.getElementById('tr-name').value.trim();
-  var dept=document.getElementById('tr-dept').value;
+  var dept=getSelectedDept();
   var eid=document.getElementById('tr-eid').value.trim();
-  if(!name||!dept){showToast('tr-toast','الاسم والإدارة مطلوبان.','ter');return;}
+  if(!name||!dept){showToast('tr-toast','الاسم واسم الدائرة/الإدارة مطلوبان.','ter');return;}
   var db=getDB();var code=tr.code;
   if(!db.records[code])db.records[code]=[];
   var existing=null;
@@ -2283,5 +2328,5 @@ initDefaultBank();tryRestoreDraft();
 populateBankSelect();
 renderSessionHistory();
 </script>
-</body>
+<script>document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('#traineesTable');if(!t)return;const h=t.tHead&&t.tHead.rows[0];if(h){let th=document.createElement('th');th.textContent='م';h.insertBefore(th,h.firstChild);}for(const b of t.tBodies){[...b.rows].forEach((r,i)=>{let td=document.createElement('td');td.textContent=i+1;r.insertBefore(td,r.firstChild);});}});</script></body>
 </html>
