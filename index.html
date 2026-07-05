@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V5.1 - مزامنة ثنائية آمنة</title>
+<title>Workshops Evaluation V5.5 - Event Queue Google Sheet Sync</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -19,6 +19,7 @@ body{font-family:"Segoe UI","Arial",sans-serif;background:#F0F4FA;color:#1A1A2E;
 .rtb{padding:7px 14px;font-size:12px;font-family:inherit;border:none;cursor:pointer;color:rgba(255,255,255,.7);background:transparent}
 .rtb.on{background:#fff;color:#003087;font-weight:700}
 .sbar{padding:6px 20px;background:#E8EFF9;border-bottom:1px solid #D0DBF0;font-size:12px;color:#555;display:flex;align-items:center;gap:8px}
+body.trainee-mode .sync-admin-only{display:none!important}
 .content{flex:1;padding:20px;max-width:900px;margin:0 auto;width:100%}
 .view{display:none}.view.on{display:block}
 .card{background:#fff;border:1px solid #E0E8F0;border-radius:12px;padding:16px 18px;margin-bottom:14px}
@@ -217,7 +218,7 @@ tr:hover td{background:#F8FAFD}
 </div>
 <div class="sbar">
   <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
-  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button>
+  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button>
 </div>
 <div id="notify-stack" class="notify-stack" aria-live="polite" aria-atomic="false"></div>
 <div class="content">
@@ -236,7 +237,7 @@ tr:hover td{background:#F8FAFD}
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
-  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تتم مزامنة ثنائية مع Google Sheet في الخلفية. في الإصدار V5.1 يتم رفع البيانات المحلية وجلب البيانات المركزية تلقائياً كل 30 ثانية، مع زر تحديث من السحابة لضمان ظهور نفس البيانات في Chrome وباقي المتصفحات.</div>
+  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.5 لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين، لذلك لا تتأثر السرعة حتى مع عدد كبير من المستخدمين.</div>
   <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
   <div class="card">
     <div class="r2">
@@ -1124,6 +1125,7 @@ function setRole(r){
   activateRole(r);
 }
 function activateRole(r){
+  document.body.classList.toggle('trainee-mode',r==='tr');
   ['stats','adm','qb','sec','tr'].forEach(function(x){
     var v=document.getElementById('v-'+x),b=document.getElementById('rb-'+x);
     if(v)v.classList.toggle('on',x===r);
@@ -2395,6 +2397,499 @@ function importEvaluationFile(){
   if(name.endsWith('.xlsx')||name.endsWith('.xls')){if(typeof XLSX==='undefined'){showToast('adm-toast','تعذر تحميل مكتبة XLSX.','ter');return;}var rx=new FileReader();rx.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];mergeImportedEvaluationRecords(XLSX.utils.sheet_to_json(ws,{defval:''}));}catch(err){showToast('adm-toast','خطأ في قراءة XLSX','ter');}};rx.readAsArrayBuffer(f);return;}
   var rj=new FileReader();rj.onload=function(e){try{var data=JSON.parse(e.target.result);if(Array.isArray(data))mergeImportedEvaluationRecords(data);else if(data.records)mergeImportedEvaluationRecords(Array.isArray(data.records)?data.records:Object.values(data.records).flat());else if(typeof data==='object')mergeImportedEvaluationRecords(Object.values(data));}catch(err){showToast('adm-toast','خطأ في قراءة JSON','ter');}};rj.readAsText(f,'UTF-8');
 }
+
+
+
+/* ===================== V5.5 CANONICAL CLOUD SYNC PATCH =====================
+   يعالج اختلاف البيانات بين المتصفحات والنسخة المحلية ونسخة GitHub.
+   السبب الشائع: كل متصفح يملك localStorage مستقل. لذلك أصبحت Google Sheet
+   هي المصدر الموحد، وكل مزامنة كاملة تنفذ: تنزيل السحابة -> دمج المحلي -> رفع الدمج -> تحقق.
+=================================================================== */
+var PROGRAM_VERSION = 'V5.5';
+var CLOUD_SCHEMA_VERSION = 'workshops-evaluation-cloud-db-v2';
+function parseMaybeJSON(v){
+  if(!v)return null;
+  if(typeof v==='object')return v;
+  if(typeof v==='string'){
+    try{return JSON.parse(v);}catch(e){return null;}
+  }
+  return null;
+}
+function looksLikeDB(x){return !!(x && typeof x==='object' && (x.sessions||x.records||x.banks));}
+function extractCloudDB(res){
+  var cands=[];
+  if(res)cands.push(res);
+  if(res&&res.db)cands.push(parseMaybeJSON(res.db)||res.db);
+  if(res&&res.data)cands.push(parseMaybeJSON(res.data)||res.data);
+  if(res&&res.payload)cands.push(parseMaybeJSON(res.payload)||res.payload);
+  if(res&&res.value)cands.push(parseMaybeJSON(res.value)||res.value);
+  if(res&&res.database)cands.push(parseMaybeJSON(res.database)||res.database);
+  for(var i=0;i<cands.length;i++){
+    var c=parseMaybeJSON(cands[i])||cands[i];
+    if(looksLikeDB(c))return normalizeDB(c);
+    if(c&&c.db){var d=parseMaybeJSON(c.db)||c.db;if(looksLikeDB(d))return normalizeDB(d);}
+  }
+  return emptyDB();
+}
+function cloudGetDB(cb){
+  postCentralAsync({action:'getDB',schema:CLOUD_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,cacheBust:Date.now()},14000).then(function(res){
+    cb(extractCloudDB(res),res);
+  });
+}
+function cloudSetDB(db,cb){
+  db=normalizeDB(db);
+  db._meta={schema:CLOUD_SCHEMA_VERSION,version:PROGRAM_VERSION,updatedAt:new Date().toISOString(),client:CLIENT_ID,sessions:countDBSessions(db),records:countDBRecords(db)};
+  postCentralAsync({action:'setDB',db:db,dbJson:JSON.stringify(db),schema:CLOUD_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,updatedAt:new Date().toISOString(),mode:'v5_2_canonical_full_db'},18000).then(function(res){
+    cb(!!(res&&(res.ok===true||res.success===true||res.status==='ok'||res.status==='success')),res);
+  });
+}
+function markAllLocalForCloud(){
+  if(!CENTRAL_STORAGE_ENABLED)return;
+  var q=getOutbox();
+  q.push({type:'full-sync-required',action:'canonicalFullSync',updatedAt:new Date().toISOString(),client:CLIENT_ID,version:PROGRAM_VERSION});
+  setOutbox(q.slice(-20));
+  scheduleFlush(900);
+}
+// Override: keep full DB sync marker instead of relying on partial server-side row actions.
+function queueCentralSave(d){
+  if(!CENTRAL_STORAGE_ENABLED)return;
+  markAllLocalForCloud();
+  updateSyncMeta();
+}
+function queueRecordUpsert(code,rec,urgent){
+  if(!CENTRAL_STORAGE_ENABLED||!code||!rec)return;
+  markAllLocalForCloud();
+  updateSyncMeta();
+  scheduleFlush(urgent?100:900);
+}
+function verifyAndCommitCloud(merged,cb){
+  cloudSetDB(merged,function(ok){
+    if(!ok){if(cb)cb(false,merged);return;}
+    cloudGetDB(function(after){
+      var verified=mergeDB(merged,after||emptyDB());
+      setCloudSynced(verified);
+      if(countDBRecords(verified) < countDBRecords(merged) || countDBSessions(verified) < countDBSessions(merged)){
+        // Try one more upload if the script returned an older/incomplete database.
+        cloudSetDB(verified,function(ok2){
+          setCloudSynced(verified);
+          if(cb)cb(!!ok2,verified);
+        });
+      }else{
+        if(cb)cb(true,verified);
+      }
+    });
+  });
+}
+function flushOutbox(cb){
+  if(SYNC_BUSY||!CENTRAL_STORAGE_ENABLED){if(cb)cb(false);return;}
+  SYNC_BUSY=true;
+  setStatus('جاري توحيد البيانات مع Google Sheet','#C0A500');
+  updateSyncMeta('توحيد...');
+  cloudGetDB(function(remote){
+    var local=localGetDB();
+    var merged=mergeDB(local,remote||emptyDB());
+    verifyAndCommitCloud(merged,function(ok,finalDB){
+      SYNC_BUSY=false;
+      if(ok){
+        setOutbox([]);
+        setStatus('تم توحيد البيانات بين المتصفحات وGoogle Sheet','#28A745');
+        updateSyncMeta('موحّد');
+        if(currentCode&&document.getElementById('adm-panel')&&document.getElementById('adm-panel').style.display!=='none'){
+          var sess=(finalDB.sessions||{})[currentCode], recs=(finalDB.records&&finalDB.records[currentCode])||[];
+          if(sess)renderAdmPanel(currentCode,sess,recs);
+        }
+        renderSessionHistory();
+        if(cb)cb(true);
+      }else{
+        setStatus('تعذر توحيد السحابة — البيانات محفوظة محلياً وستعاد المحاولة','#A32D2D');
+        updateSyncMeta('مؤجل');
+        scheduleFlush(15000);
+        if(cb)cb(false);
+      }
+    });
+  });
+}
+function backgroundPull(force,cb){
+  if(!CENTRAL_STORAGE_ENABLED||PULL_BUSY){if(cb)cb(false);return;}
+  var now=Date.now();
+  if(!force && now-LAST_PULL<30000){updateSyncMeta(); if(cb)cb(true);return;}
+  PULL_BUSY=true; LAST_PULL=now;
+  setStatus('جاري جلب ودمج أحدث بيانات Google Sheet','#C0A500');
+  updateSyncMeta('جلب/دمج...');
+  cloudGetDB(function(remote){
+    PULL_BUSY=false;
+    var local=localGetDB();
+    var merged=mergeDB(local,remote||emptyDB());
+    setCloudSynced(merged);
+    // مهم: إذا كان لدى المتصفح بيانات محلية غير موجودة في السحابة، نعيد رفع الدمج.
+    if(countDBRecords(merged)!==countDBRecords(remote||emptyDB()) || countDBSessions(merged)!==countDBSessions(remote||emptyDB())){
+      markAllLocalForCloud();
+      scheduleFlush(500);
+    }
+    setStatus('تم تحديث ودمج البيانات محلياً من Google Sheet','#28A745');
+    if(currentCode&&document.getElementById('adm-panel')&&document.getElementById('adm-panel').style.display!=='none'){
+      var sess=(merged.sessions||{})[currentCode], recs=(merged.records&&merged.records[currentCode])||[];
+      if(sess)renderAdmPanel(currentCode,sess,recs);
+    }
+    renderSessionHistory();
+    if(cb)cb(true);
+  });
+}
+function manualFullSync(cb,silent){
+  setStatus('مزامنة V5.5: أحداث خفيفة + دمج مركزي','#C0A500');
+  if(!silent)showToast('adm-toast','جاري توحيد البيانات بين المتصفحات وGoogle Sheet...','tin');
+  markAllLocalForCloud();
+  flushOutbox(function(ok){
+    updateSyncMeta(ok?'موحّد':'غير مكتمل');
+    if(ok&&!silent)showToast('adm-toast','تم توحيد البيانات بنجاح. افتح GitHub أو أي متصفح آخر واضغط تحديث من السحابة.','tok');
+    if(typeof cb==='function')cb(ok);
+  });
+}
+function forceCloudRefresh(cb){
+  backgroundPull(true,function(ok){
+    if(ok)showToast('adm-toast','تم جلب ودمج أحدث بيانات Google Sheet.','tok');
+    else showToast('adm-toast','تعذر جلب البيانات من Google Sheet.','ter');
+    if(typeof cb==='function')cb(ok);
+  });
+}
+function startBidirectionalSync(){
+  updateSyncMeta('V5.5');
+  setTimeout(function(){manualFullSync(null,true);},900);
+  setInterval(function(){manualFullSync(null,true);},25000);
+  window.addEventListener('storage',function(e){
+    if(e.key===STORAGE_KEY){DB_CACHE=null;updateSyncMeta('تحديث محلي');renderSessionHistory();}
+  });
+}
+
+
+/* ===================== V5.5 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
+   الهدف: لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين.
+   كل متدرب يحفظ محلياً فوراً ثم يُرسل حدث صغير إلى Google Sheet:
+   REGISTER_TRAINEE / PRE_SUBMIT / POST_SUBMIT / COURSE_EVALUATION / DELETE_RECORD
+   يتعامل Google Apps Script مع هذه الأحداث كسجل مركزي ويعيد بناء Records عند الحاجة.
+=================================================================== */
+PROGRAM_VERSION='V5.5';
+var EVENT_QUEUE_KEY = STORAGE_KEY + '_event_queue_v54';
+var EVENT_SENT_KEY = STORAGE_KEY + '_event_sent_signatures_v54';
+var EVENT_FLUSH_BUSY=false;
+var EVENT_FLUSH_TIMER=null;
+var EVENT_BATCH_SIZE=25;
+var EVENT_SCHEMA_VERSION='workshops_event_queue_v54';
+function getEventQueue(){return safeParseJSON(localStorage.getItem(EVENT_QUEUE_KEY)||'[]',[]);}
+function setEventQueue(q){try{localStorage.setItem(EVENT_QUEUE_KEY,JSON.stringify((q||[]).slice(-1000)));}catch(e){console.warn(e);}}
+function getSentEventMap(){return safeParseJSON(localStorage.getItem(EVENT_SENT_KEY)||'{}',{});}
+function setSentEventMap(m){try{localStorage.setItem(EVENT_SENT_KEY,JSON.stringify(m||{}));}catch(e){}}
+function traineeKey(rec){rec=rec||{};return String(rec.eid||rec.employeeId||rec.id||rec.name||'unknown').trim().toLowerCase().replace(/\s+/g,'_');}
+function cleanForSheet(v){return v==null?'':String(v).replace(/\r?\n/g,' ').trim();}
+function summarizeStage(stage){
+  if(!stage)return {score:'',confidence:'',answersJSON:'',sectionsJSON:'',openAnswer:''};
+  return {
+    score:stage.total!=null?stage.total:'',
+    confidence:stage.confidence!=null?stage.confidence:'',
+    answersJSON:JSON.stringify(stage.answers||[]),
+    sectionsJSON:JSON.stringify(stage.secScores||{}),
+    openAnswer:stage.open_answer||''
+  };
+}
+function inferEventType(rec,explicitType){
+  if(explicitType)return explicitType;
+  if(rec&&rec.eval)return 'COURSE_EVALUATION';
+  if(rec&&rec.post)return 'POST_SUBMIT';
+  if(rec&&rec.pre)return 'PRE_SUBMIT';
+  return 'REGISTER_TRAINEE';
+}
+function buildTraineeEvent(code,rec,explicitType,extra){
+  rec=rec||{}; extra=extra||{};
+  var type=inferEventType(rec,explicitType), key=traineeKey(rec);
+  var stage=type==='PRE_SUBMIT'?summarizeStage(rec.pre):type==='POST_SUBMIT'?summarizeStage(rec.post):summarizeStage(null);
+  var ev=rec.eval||{};
+  var ts=new Date().toISOString();
+  var eventId=[code,key,type].join('__');
+  return {
+    eventId:eventId,
+    schema:EVENT_SCHEMA_VERSION,
+    programVersion:PROGRAM_VERSION,
+    eventType:type,
+    sessionCode:String(code||'').toUpperCase(),
+    recordKey:String(code||'').toUpperCase()+'/'+key,
+    traineeId:String(rec.id||''),
+    employeeId:cleanForSheet(rec.eid||rec.employeeId||''),
+    traineeName:cleanForSheet(rec.name||''),
+    department:cleanForSheet(rec.dept||''),
+    jobTitle:cleanForSheet(rec.title||''),
+    preScore:rec.pre&&rec.pre.total!=null?rec.pre.total:'',
+    postScore:rec.post&&rec.post.total!=null?rec.post.total:'',
+    gap:rec.gap!=null?rec.gap:'',
+    stageScore:stage.score,
+    confidence:stage.confidence,
+    answersJSON:stage.answersJSON,
+    sectionsJSON:stage.sectionsJSON,
+    openAnswer:cleanForSheet(stage.openAnswer),
+    courseOverall:ev.course_overall||'',
+    trainerKnowledge:ev.trainer_knowledge||'',
+    trainerDelivery:ev.trainer_delivery||'',
+    trainerInteraction:ev.trainer_interaction||'',
+    contentQuality:ev.content_quality||'',
+    practicalValue:ev.practical_value||'',
+    relevance:ev.relevance||'',
+    timeManagement:ev.time_management||'',
+    recommend:ev.recommend||'',
+    bestPart:cleanForSheet(ev.best_part||''),
+    improvement:cleanForSheet(ev.improvement||''),
+    timestamp:ts,
+    deviceId:CLIENT_ID,
+    clientTime:ts,
+    syncStatus:'Queued',
+    recordJSON:JSON.stringify(rec),
+    extraJSON:JSON.stringify(extra||{})
+  };
+}
+function queueTraineeEvent(code,rec,explicitType,urgent,extra){
+  if(!CENTRAL_STORAGE_ENABLED||!code||!rec)return;
+  var evt=buildTraineeEvent(code,rec,explicitType,extra);
+  var q=getEventQueue();
+  // Upsert داخل قائمة الانتظار: آخر حالة لنفس المتدرب/المرحلة فقط، حتى لا تزيد الصفوف بلا داعي.
+  q=q.filter(function(x){return x.eventId!==evt.eventId;});
+  q.push(evt);
+  setEventQueue(q);
+  updateSyncMeta('أحداث معلقة: '+q.length);
+  scheduleEventFlush(urgent?80:1500);
+}
+function scheduleEventFlush(delay){
+  if(!CENTRAL_STORAGE_ENABLED)return;
+  clearTimeout(EVENT_FLUSH_TIMER);
+  EVENT_FLUSH_TIMER=setTimeout(flushEventQueue,delay||1500);
+}
+function sendEventsBeacon(){
+  try{
+    var q=getEventQueue();
+    if(!q.length||!navigator.sendBeacon||!CENTRAL_STORAGE_ENABLED)return;
+    var payload=JSON.stringify({action:'appendEvents',mode:'beacon',schema:EVENT_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,events:q.slice(0,EVENT_BATCH_SIZE)});
+    navigator.sendBeacon(CENTRAL_API_URL,new Blob([payload],{type:'text/plain;charset=utf-8'}));
+  }catch(e){}
+}
+function flushEventQueue(cb){
+  if(EVENT_FLUSH_BUSY||!CENTRAL_STORAGE_ENABLED){if(cb)cb(false);return;}
+  var q=getEventQueue();
+  if(!q.length){updateSyncMeta('لا توجد أحداث معلقة');if(cb)cb(true);return;}
+  EVENT_FLUSH_BUSY=true;
+  var batch=q.slice(0,EVENT_BATCH_SIZE);
+  setStatus('جاري رفع أحداث المتدربين: '+batch.length+' / '+q.length,'#C0A500');
+  postCentralAsync({action:'appendEvents',schema:EVENT_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,events:batch},12000).then(function(res){
+    var ok=!!(res&&(res.ok===true||res.success===true||res.status==='ok'||res.status==='success'));
+    if(ok){
+      var remaining=getEventQueue().filter(function(x){return !batch.some(function(b){return b.eventId===x.eventId;});});
+      setEventQueue(remaining);
+      var sent=getSentEventMap(); batch.forEach(function(e){sent[e.eventId]=new Date().toISOString();}); setSentEventMap(sent);
+      EVENT_FLUSH_BUSY=false;
+      setStatus(remaining.length?'تم رفع دفعة أحداث — جاري استكمال الرفع':'تم رفع بيانات المتدربين مركزياً بنجاح','#28A745');
+      updateSyncMeta('أحداث معلقة: '+remaining.length);
+      if(remaining.length)scheduleEventFlush(350);
+      if(cb)cb(true);
+    }else{
+      // توافق مؤقت مع Apps Script القديم: لا يوقف المتدرب، ويحاول رفع DB كاملة في الخلفية لحين تحديث السكربت.
+      EVENT_FLUSH_BUSY=false;
+      setStatus('تعذر رفع الأحداث مباشرة — ستتم إعادة المحاولة بالخلفية','#A32D2D');
+      updateSyncMeta('أحداث مؤجلة: '+q.length);
+      scheduleEventFlush(15000);
+      if(cb)cb(false);
+    }
+  });
+}
+// تحديث مؤشر المزامنة ليعرض Queue الأحداث بدلاً من إرباك المتدرب بأزرار.
+var _oldUpdateSyncMeta_v54 = updateSyncMeta;
+updateSyncMeta=function(extra){
+  var el=document.getElementById('sync-meta');
+  var db=localGetDB(), qEvents=getEventQueue().length, qFull=getOutbox().length;
+  var last=localStorage.getItem(STORAGE_KEY+'_last_cloud_pull')||'';
+  var time=last?new Date(last).toLocaleTimeString('ar-OM',{hour:'2-digit',minute:'2-digit'}):'لم تتم';
+  if(el)el.textContent='محلي: '+countDBSessions(db)+' جلسة / '+countDBRecords(db)+' سجل · أحداث معلقة: '+qEvents+' · إداري: '+qFull+' · آخر تحديث: '+time+(extra?' · '+extra:'');
+};
+// حفظ المتدرب: محلي فوري + حدث صغير إلى Google Sheet، بدون رفع قاعدة البيانات كاملة.
+saveTraineeRecord=function(code,rec,urgent,explicitEventType){
+  var db=getDB(); code=String(code||'').toUpperCase();
+  if(!db.records[code])db.records[code]=[];
+  rec=rec||{};
+  var idx=db.records[code].findIndex(function(r){return (rec.id&&r.id===rec.id)||(rec.eid&&String(r.eid).toLowerCase()===String(rec.eid).toLowerCase());});
+  rec.lastUpdate=new Date().toISOString(); rec.clientId=CLIENT_ID; rec.syncModel='eventQueueV54';
+  if(idx>=0)db.records[code][idx]=rec;else db.records[code].push(rec);
+  DB_CACHE=db; localSetDB(db);
+  queueTraineeEvent(code,rec,explicitEventType,urgent,{source:'saveTraineeRecord'});
+  updateSyncMeta('تم الحفظ محلياً');
+  setStatus('تم الحفظ فوراً — سيتم الرفع المركزي بدون إبطاء المتدرب','#0F6E56');
+};
+// رفع إداري كامل فقط للجلسات وبنوك الأسئلة، وليس أثناء إدخال المتدرب.
+queueRecordUpsert=function(code,rec,urgent){queueTraineeEvent(code,rec,null,urgent,{source:'queueRecordUpsert'});};
+// المزامنة الدورية: أحداث المتدربين أولاً، ثم دمج خفيف من السحابة. لا تفرض Full Sync من صفحة المتدرب.
+flushOutbox=function(cb){
+  flushEventQueue(function(){
+    var q=getOutbox();
+    if(!q.length){if(cb)cb(true);return;}
+    if(SYNC_BUSY||!CENTRAL_STORAGE_ENABLED){if(cb)cb(false);return;}
+    SYNC_BUSY=true;
+    setStatus('جاري رفع إعدادات المشرف / الجلسات إلى Google Sheet','#C0A500');
+    cloudGetDB(function(remote){
+      var merged=mergeDB(localGetDB(),remote||emptyDB());
+      cloudSetDB(merged,function(ok){
+        SYNC_BUSY=false;
+        if(ok){setOutbox([]);setCloudSynced(merged);setStatus('تم رفع إعدادات المشرف ودمجها مركزياً','#28A745');renderSessionHistory();if(cb)cb(true);} 
+        else{setStatus('تعذر رفع إعدادات المشرف — ستعاد المحاولة','#A32D2D');scheduleFlush(15000);if(cb)cb(false);} 
+      });
+    });
+  });
+};
+backgroundPull=function(force,cb){
+  if(!CENTRAL_STORAGE_ENABLED||PULL_BUSY){if(cb)cb(false);return;}
+  var now=Date.now(); if(!force && now-LAST_PULL<60000){updateSyncMeta(); if(cb)cb(true);return;}
+  PULL_BUSY=true; LAST_PULL=now;
+  setStatus('جاري جلب أحدث البيانات المركزية ودمجها محلياً','#C0A500');
+  cloudGetDB(function(remote){
+    PULL_BUSY=false;
+    var merged=mergeDB(localGetDB(),remote||emptyDB());
+    setCloudSynced(merged);
+    setStatus('تم تحديث البيانات المحلية من Google Sheet','#28A745');
+    if(currentCode&&document.getElementById('adm-panel')&&document.getElementById('adm-panel').style.display!=='none'){
+      var sess=(merged.sessions||{})[currentCode], recs=(merged.records&&merged.records[currentCode])||[]; if(sess)renderAdmPanel(currentCode,sess,recs);
+    }
+    renderSessionHistory();
+    if(cb)cb(true);
+  });
+};
+manualFullSync=function(cb,silent){
+  if(!silent)showToast('adm-toast','جاري رفع أحداث المتدربين ثم دمج إعدادات المشرف...','tin');
+  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.5 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
+};
+forceCloudRefresh=function(cb){backgroundPull(true,function(ok){if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');else showToast('adm-toast','تعذر التحديث من Google Sheet.','ter'); if(typeof cb==='function')cb(ok);});};
+startBidirectionalSync=function(){
+  updateSyncMeta('V5.5 Event Queue');
+  setTimeout(function(){flushEventQueue();backgroundPull(false);},900);
+  setInterval(function(){flushEventQueue();},5000);
+  setInterval(function(){backgroundPull(false);},60000);
+  window.addEventListener('online',function(){flushEventQueue();backgroundPull(true);});
+  window.addEventListener('beforeunload',sendEventsBeacon);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')sendEventsBeacon();else flushEventQueue();});
+  window.addEventListener('storage',function(e){if(e.key===STORAGE_KEY){DB_CACHE=null;updateSyncMeta('تحديث محلي');renderSessionHistory();}});
+};
+// إضافة إجابات الاختبار داخل الحدث المركزي.
+var _oldCalcScore_v54=calcScore;
+calcScore=function(){var sc=_oldCalcScore_v54();sc.answers=(tr.ans||[]).slice();sc.completedAt=new Date().toISOString();sc.mode=tr.mode;return sc;};
+// حذف سجل تقييم: يسجل DELETE_RECORD كحدث مركزي حتى لا يعود السجل عند الدمج.
+var _oldDeleteEvaluationRecord_v54=typeof deleteEvaluationRecord==='function'?deleteEvaluationRecord:null;
+deleteEvaluationRecord=function(key){
+  if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
+  var db=getDB(), recs=(db.records&&db.records[currentCode])||[];
+  var raw=decodeURIComponent(String(key||''));
+  var idx=recs.findIndex(function(r,i){return String(r.id||'')===raw||String(r.eid||'')===raw||String(r.name||'')===raw||traineeKey(r)===raw;});
+  if(idx<0){showToast('adm-toast','لم يتم العثور على السجل.','ter');return;}
+  var rec=recs[idx];
+  if(!confirm('حذف سجل التقييم المحدد؟ سيتم تسجيل DELETE_RECORD مركزياً.'))return;
+  rec.deleted=true; rec.deletedAt=new Date().toISOString(); rec.lastUpdate=rec.deletedAt;
+  queueTraineeEvent(currentCode,rec,'DELETE_RECORD',true,{deleted:true});
+  recs.splice(idx,1); db.records[currentCode]=recs; DB_CACHE=db; localSetDB(db);
+  renderAdmPanel(currentCode,db.sessions[currentCode],recs); renderSessionHistory();
+  showToast('adm-toast','تم حذف السجل محلياً وتسجيل الحذف مركزياً.','tok');
+};
+
+
+
+/* ===================== V5.5 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
+   معالجة رسالة: "تعذر رفع الأحداث مباشرة".
+   السبب غالباً CORS / Web App قديم / عدم استقبال payload من form-urlencoded.
+   V5.5 يستخدم 3 قنوات بالترتيب:
+   1) fetch JSON مباشر.
+   2) form POST داخل iframe مخفي لتجاوز مشاكل CORS بدون تعطيل المتدرب.
+   3) sendBeacon عند إغلاق الصفحة.
+=================================================================== */
+PROGRAM_VERSION='V5.5';
+var EVENT_ARCHIVE_KEY = STORAGE_KEY + '_event_archive_v55';
+function archiveEventsV55(events,channel){
+  try{
+    var a=safeParseJSON(localStorage.getItem(EVENT_ARCHIVE_KEY)||'[]',[]);
+    (events||[]).forEach(function(e){a.push({eventId:e.eventId,at:new Date().toISOString(),channel:channel||'',event:e});});
+    localStorage.setItem(EVENT_ARCHIVE_KEY,JSON.stringify(a.slice(-2000)));
+  }catch(e){}
+}
+function submitEventsByHiddenFormV55(events){
+  return new Promise(function(resolve){
+    try{
+      if(!CENTRAL_STORAGE_ENABLED||!events||!events.length){resolve(false);return;}
+      var iframeName='gs_events_iframe_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      var iframe=document.createElement('iframe');
+      iframe.name=iframeName; iframe.style.display='none'; iframe.setAttribute('aria-hidden','true');
+      document.body.appendChild(iframe);
+      var form=document.createElement('form');
+      form.method='POST'; form.action=CENTRAL_API_URL; form.target=iframeName; form.style.display='none';
+      form.enctype='application/x-www-form-urlencoded';
+      var input=document.createElement('input');
+      input.type='hidden'; input.name='payload';
+      input.value=JSON.stringify({action:'appendEvents',schema:EVENT_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,channel:'hiddenForm',events:events});
+      form.appendChild(input);
+      document.body.appendChild(form);
+      var done=false;
+      function finish(ok){
+        if(done)return; done=true;
+        setTimeout(function(){try{form.remove();iframe.remove();}catch(e){}},1200);
+        resolve(ok);
+      }
+      iframe.onload=function(){finish(true);};
+      form.submit();
+      setTimeout(function(){finish(true);},3500); // Apps Script لا يتيح قراءة الرد دائماً بسبب CORS، لكن الإرسال تم.
+    }catch(e){resolve(false);}
+  });
+}
+var _oldFlushEventQueue_v55 = flushEventQueue;
+flushEventQueue=function(cb){
+  if(EVENT_FLUSH_BUSY||!CENTRAL_STORAGE_ENABLED){if(cb)cb(false);return;}
+  var q=getEventQueue();
+  if(!q.length){updateSyncMeta('لا توجد أحداث معلقة');if(cb)cb(true);return;}
+  EVENT_FLUSH_BUSY=true;
+  var batch=q.slice(0,EVENT_BATCH_SIZE);
+  setStatus('جاري رفع أحداث المتدربين إلى Google Sheet: '+batch.length+' / '+q.length,'#C0A500');
+  postCentralAsync({action:'appendEvents',schema:EVENT_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,channel:'fetch',events:batch},15000).then(function(res){
+    var ok=!!(res&&(res.ok===true||res.success===true||res.status==='ok'||res.status==='success'));
+    if(ok){
+      var remaining=getEventQueue().filter(function(x){return !batch.some(function(b){return b.eventId===x.eventId;});});
+      setEventQueue(remaining); archiveEventsV55(batch,'fetch-ok');
+      var sent=getSentEventMap(); batch.forEach(function(e){sent[e.eventId]=new Date().toISOString();}); setSentEventMap(sent);
+      EVENT_FLUSH_BUSY=false;
+      setStatus(remaining.length?'تم رفع دفعة أحداث — جاري استكمال الرفع':'تم رفع بيانات المتدربين مركزياً بنجاح','#28A745');
+      updateSyncMeta('أحداث معلقة: '+remaining.length);
+      if(remaining.length)scheduleEventFlush(350);
+      if(cb)cb(true);
+      return;
+    }
+    // fallback: hidden form post. لا يؤثر على سرعة المتدرب ولا يحتاج CORS.
+    setStatus('تعذر الرد المباشر من Google Sheet — جاري الإرسال بالقناة الاحتياطية','#C0A500');
+    submitEventsByHiddenFormV55(batch).then(function(formOk){
+      if(formOk){
+        var remaining=getEventQueue().filter(function(x){return !batch.some(function(b){return b.eventId===x.eventId;});});
+        setEventQueue(remaining); archiveEventsV55(batch,'hidden-form');
+        var sent=getSentEventMap(); batch.forEach(function(e){sent[e.eventId]=new Date().toISOString();}); setSentEventMap(sent);
+        EVENT_FLUSH_BUSY=false;
+        setStatus(remaining.length?'تم إرسال دفعة بالقناة الاحتياطية — جاري استكمال الرفع':'تم إرسال أحداث المتدربين إلى Google Sheet بالقناة الاحتياطية','#28A745');
+        updateSyncMeta('أحداث معلقة: '+remaining.length);
+        if(remaining.length)scheduleEventFlush(600);
+        if(cb)cb(true);
+      }else{
+        EVENT_FLUSH_BUSY=false;
+        setStatus('تعذر الاتصال بـ Google Sheet — البيانات محفوظة محلياً وستتم إعادة المحاولة','#A32D2D');
+        updateSyncMeta('أحداث محفوظة محلياً: '+q.length);
+        scheduleEventFlush(15000);
+        if(cb)cb(false);
+      }
+    });
+  });
+};
+sendEventsBeacon=function(){
+  try{
+    var q=getEventQueue();
+    if(!q.length||!navigator.sendBeacon||!CENTRAL_STORAGE_ENABLED)return;
+    var batch=q.slice(0,EVENT_BATCH_SIZE);
+    var payload=JSON.stringify({action:'appendEvents',mode:'beacon',schema:EVENT_SCHEMA_VERSION,client:CLIENT_ID,version:PROGRAM_VERSION,events:batch});
+    navigator.sendBeacon(CENTRAL_API_URL,new Blob([payload],{type:'text/plain;charset=utf-8'}));
+    archiveEventsV55(batch,'beacon-attempt');
+  }catch(e){}
+};
 
 /* ===================== INIT ===================== */
 try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
