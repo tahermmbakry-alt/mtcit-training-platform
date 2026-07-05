@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V5.5 - Event Queue Google Sheet Sync</title>
+<title>Workshops Evaluation V5.6 - Event Queue Google Sheet Sync</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -237,7 +237,7 @@ tr:hover td{background:#F8FAFD}
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
-  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.5 لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين، لذلك لا تتأثر السرعة حتى مع عدد كبير من المستخدمين.</div>
+  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.6 لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين، لذلك لا تتأثر السرعة حتى مع عدد كبير من المستخدمين.</div>
   <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
   <div class="card">
     <div class="r2">
@@ -2400,12 +2400,12 @@ function importEvaluationFile(){
 
 
 
-/* ===================== V5.5 CANONICAL CLOUD SYNC PATCH =====================
+/* ===================== V5.6 CANONICAL CLOUD SYNC PATCH =====================
    يعالج اختلاف البيانات بين المتصفحات والنسخة المحلية ونسخة GitHub.
    السبب الشائع: كل متصفح يملك localStorage مستقل. لذلك أصبحت Google Sheet
    هي المصدر الموحد، وكل مزامنة كاملة تنفذ: تنزيل السحابة -> دمج المحلي -> رفع الدمج -> تحقق.
 =================================================================== */
-var PROGRAM_VERSION = 'V5.5';
+var PROGRAM_VERSION = 'V5.6';
 var CLOUD_SCHEMA_VERSION = 'workshops-evaluation-cloud-db-v2';
 function parseMaybeJSON(v){
   if(!v)return null;
@@ -2536,7 +2536,7 @@ function backgroundPull(force,cb){
   });
 }
 function manualFullSync(cb,silent){
-  setStatus('مزامنة V5.5: أحداث خفيفة + دمج مركزي','#C0A500');
+  setStatus('مزامنة V5.6: أحداث خفيفة + دمج مركزي','#C0A500');
   if(!silent)showToast('adm-toast','جاري توحيد البيانات بين المتصفحات وGoogle Sheet...','tin');
   markAllLocalForCloud();
   flushOutbox(function(ok){
@@ -2553,7 +2553,7 @@ function forceCloudRefresh(cb){
   });
 }
 function startBidirectionalSync(){
-  updateSyncMeta('V5.5');
+  updateSyncMeta('V5.6');
   setTimeout(function(){manualFullSync(null,true);},900);
   setInterval(function(){manualFullSync(null,true);},25000);
   window.addEventListener('storage',function(e){
@@ -2562,19 +2562,19 @@ function startBidirectionalSync(){
 }
 
 
-/* ===================== V5.5 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
+/* ===================== V5.6 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
    الهدف: لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين.
    كل متدرب يحفظ محلياً فوراً ثم يُرسل حدث صغير إلى Google Sheet:
    REGISTER_TRAINEE / PRE_SUBMIT / POST_SUBMIT / COURSE_EVALUATION / DELETE_RECORD
    يتعامل Google Apps Script مع هذه الأحداث كسجل مركزي ويعيد بناء Records عند الحاجة.
 =================================================================== */
-PROGRAM_VERSION='V5.5';
-var EVENT_QUEUE_KEY = STORAGE_KEY + '_event_queue_v54';
-var EVENT_SENT_KEY = STORAGE_KEY + '_event_sent_signatures_v54';
+PROGRAM_VERSION='V5.6';
+var EVENT_QUEUE_KEY = STORAGE_KEY + '_event_queue_v56';
+var EVENT_SENT_KEY = STORAGE_KEY + '_event_sent_signatures_v56';
 var EVENT_FLUSH_BUSY=false;
 var EVENT_FLUSH_TIMER=null;
 var EVENT_BATCH_SIZE=25;
-var EVENT_SCHEMA_VERSION='workshops_event_queue_v54';
+var EVENT_SCHEMA_VERSION='workshops_event_queue_v56';
 function getEventQueue(){return safeParseJSON(localStorage.getItem(EVENT_QUEUE_KEY)||'[]',[]);}
 function setEventQueue(q){try{localStorage.setItem(EVENT_QUEUE_KEY,JSON.stringify((q||[]).slice(-1000)));}catch(e){console.warn(e);}}
 function getSentEventMap(){return safeParseJSON(localStorage.getItem(EVENT_SENT_KEY)||'{}',{});}
@@ -2757,11 +2757,11 @@ backgroundPull=function(force,cb){
 };
 manualFullSync=function(cb,silent){
   if(!silent)showToast('adm-toast','جاري رفع أحداث المتدربين ثم دمج إعدادات المشرف...','tin');
-  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.5 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
+  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.6 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
 };
 forceCloudRefresh=function(cb){backgroundPull(true,function(ok){if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');else showToast('adm-toast','تعذر التحديث من Google Sheet.','ter'); if(typeof cb==='function')cb(ok);});};
 startBidirectionalSync=function(){
-  updateSyncMeta('V5.5 Event Queue');
+  updateSyncMeta('V5.6 Event Queue');
   setTimeout(function(){flushEventQueue();backgroundPull(false);},900);
   setInterval(function(){flushEventQueue();},5000);
   setInterval(function(){backgroundPull(false);},60000);
@@ -2792,16 +2792,16 @@ deleteEvaluationRecord=function(key){
 
 
 
-/* ===================== V5.5 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
+/* ===================== V5.6 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
    معالجة رسالة: "تعذر رفع الأحداث مباشرة".
    السبب غالباً CORS / Web App قديم / عدم استقبال payload من form-urlencoded.
-   V5.5 يستخدم 3 قنوات بالترتيب:
+   V5.6 يستخدم 3 قنوات بالترتيب:
    1) fetch JSON مباشر.
    2) form POST داخل iframe مخفي لتجاوز مشاكل CORS بدون تعطيل المتدرب.
    3) sendBeacon عند إغلاق الصفحة.
 =================================================================== */
-PROGRAM_VERSION='V5.5';
-var EVENT_ARCHIVE_KEY = STORAGE_KEY + '_event_archive_v55';
+PROGRAM_VERSION='V5.6';
+var EVENT_ARCHIVE_KEY = STORAGE_KEY + '_event_archive_v56';
 function archiveEventsV55(events,channel){
   try{
     var a=safeParseJSON(localStorage.getItem(EVENT_ARCHIVE_KEY)||'[]',[]);
@@ -2889,6 +2889,101 @@ sendEventsBeacon=function(){
     navigator.sendBeacon(CENTRAL_API_URL,new Blob([payload],{type:'text/plain;charset=utf-8'}));
     archiveEventsV55(batch,'beacon-attempt');
   }catch(e){}
+};
+
+
+/* ===================== V5.6 TRAINEE CODE CHECK FIX =====================
+   إصلاح الرسالة المتكررة عند المتدرب:
+   - لا يوجد استدعاء تكراري trJoin -> forceRefreshThen -> trJoin.
+   - التحقق المركزي يتم مرة واحدة فقط لكل ضغطة، مع قفل مؤقت لمنع التكرار.
+   - رسالة "جاري التحقق" تظهر داخل شاشة المتدرب فقط ولا تظهر كإشعار عائم متكرر.
+   - بعد الجلب من Google Sheet يتم إكمال الدخول إن وجد الرمز، أو إظهار خطأ واحد فقط.
+=================================================================== */
+PROGRAM_VERSION='V5.6';
+var TRAINEE_CODE_CHECK_BUSY=false;
+var TRAINEE_LAST_CHECK={code:'',at:0};
+function setTraineeInlineMessage(msg,type){
+  var e=document.getElementById('tr-toast');
+  if(!e)return;
+  var cls=type==='error'?'ter':type==='success'?'tok':'tin';
+  e.className='toast '+cls;
+  e.textContent=msg;
+  e.style.display='block';
+}
+function clearTraineeInlineMessage(delay){
+  var e=document.getElementById('tr-toast'); if(!e)return;
+  setTimeout(function(){e.style.display='none';e.className='toast';e.textContent='';},delay||2500);
+}
+function setTraineeJoinBusy(isBusy){
+  var btn=document.querySelector('#tr-s1 .bp');
+  if(btn){
+    btn.disabled=!!isBusy;
+    btn.innerHTML=isBusy?'<span class="spin"></span> جاري التحقق':'<i class="ti ti-login"></i> دخول / متابعة';
+  }
+}
+function continueTraineeJoinV56(code,eid,sess){
+  var db=localGetDB();
+  sess=sess||((db.sessions||{})[code]);
+  if(!sess){setTraineeInlineMessage('الرمز غير صحيح أو لم تتم مزامنته بعد. تواصل مع المشرف.','error');return;}
+  var bank=(db.banks||{})[sess.bankId];
+  if(!bank){setTraineeInlineMessage('بنك الأسئلة غير موجود. تواصل مع المشرف.','error');return;}
+  tr.code=code;tr.qs=bank.questions||[];
+  var recs=(db.records&&db.records[code])||[];
+  if(eid){
+    var rec=null, eidLower=String(eid).toLowerCase();
+    for(var i=0;i<recs.length;i++){
+      var rEid=String(recs[i].eid||recs[i].employeeId||'').toLowerCase();
+      if(rEid && rEid===eidLower){rec=recs[i];break;}
+    }
+    if(rec){tr.rec=rec;hide('tr-s1');showResume(code,sess,rec);return;}
+    else{setTraineeInlineMessage('الرقم الوظيفي غير موجود — سجّل بياناتك.','info');document.getElementById('tr-eid').value=eid;}
+  }else{
+    clearTraineeInlineMessage(1200);
+  }
+  hide('tr-s1');
+  document.getElementById('tr-sess-banner').innerHTML='<div style="display:flex;align-items:center;gap:10px"><i class="ti ti-circle-check" style="font-size:18px;color:#003087"></i><div><div style="font-size:13px;font-weight:700;color:#003087">'+safeHtml(sess.batch||'')+'</div><div style="font-size:12px;color:#555">المدرب: '+safeHtml(sess.trainer||'—')+' · بنك: '+safeHtml(bank.name||'')+'</div></div></div>';
+  show('tr-s2');
+}
+trJoin=function(){
+  var code=document.getElementById('tr-code').value.trim().toUpperCase();
+  var eid=document.getElementById('tr-eid-l').value.trim();
+  if(code.length!==6){showToast('tr-toast','أدخل رمزاً من 6 أحرف.','ter');return;}
+  var db=localGetDB();
+  var sess=(db.sessions||{})[code];
+  if(sess){continueTraineeJoinV56(code,eid,sess);return;}
+  if(!CENTRAL_STORAGE_ENABLED){showToast('tr-toast','الرمز غير موجود محلياً. تواصل مع المشرف.','ter');return;}
+  var now=Date.now();
+  if(TRAINEE_CODE_CHECK_BUSY){
+    setTraineeInlineMessage('جاري التحقق من الرمز مركزياً، يرجى الانتظار...','info');
+    return;
+  }
+  if(TRAINEE_LAST_CHECK.code===code && now-TRAINEE_LAST_CHECK.at<8000){
+    setTraineeInlineMessage('تم التحقق منذ قليل ولم يتم العثور على الرمز. يرجى المحاولة بعد لحظات أو التواصل مع المشرف.','error');
+    return;
+  }
+  TRAINEE_CODE_CHECK_BUSY=true;
+  TRAINEE_LAST_CHECK={code:code,at:now};
+  setTraineeJoinBusy(true);
+  setTraineeInlineMessage('جاري التحقق من الرمز مركزياً مرة واحدة فقط...','info');
+  backgroundPull(true,function(){
+    TRAINEE_CODE_CHECK_BUSY=false;
+    setTraineeJoinBusy(false);
+    DB_CACHE=null;
+    var fresh=localGetDB();
+    var cloudSess=(fresh.sessions||{})[code];
+    if(cloudSess){
+      setTraineeInlineMessage('تم العثور على الجلسة.','success');
+      continueTraineeJoinV56(code,eid,cloudSess);
+    }else{
+      setTraineeInlineMessage('لم يتم العثور على الرمز مركزياً. تأكد من الرمز أو اطلب من المشرف مزامنة الجلسة.','error');
+    }
+  });
+};
+// لا تعرض إشعاراً عائماً عالمياً لرسالة التحقق المركزية الخاصة بالمتدرب.
+var _showToast_before_v56=showToast;
+showToast=function(id,m,t){
+  if(id==='tr-toast' && String(m||'').indexOf('جاري التحقق من الرمز')>-1){setTraineeInlineMessage(m,'info');return;}
+  _showToast_before_v56(id,m,t);
 };
 
 /* ===================== INIT ===================== */
