@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V4 - حفظ متزامن آمن للمتدربين</title>
+<title>Workshops Evaluation V5.1 - مزامنة ثنائية آمنة</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -204,7 +204,7 @@ tr:hover td{background:#F8FAFD}
 <div class="app">
 <div class="topbar">
   <div>
-    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026</div>
+    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.1</span></div>
     <div class="ts">اختبار المتدرب قبل وبعد الدورة وتقييم الدورة</div>
   </div>
   <div class="rtog">
@@ -217,7 +217,7 @@ tr:hover td{background:#F8FAFD}
 </div>
 <div class="sbar">
   <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
-  <span id="stxt">جاهز</span><button class="bs" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="flushOutbox();backgroundPull(true)"><i class="ti ti-refresh"></i> مزامنة</button>
+  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button>
 </div>
 <div id="notify-stack" class="notify-stack" aria-live="polite" aria-atomic="false"></div>
 <div class="content">
@@ -236,7 +236,7 @@ tr:hover td{background:#F8FAFD}
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
-  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تتم المزامنة مع Google Sheet في الخلفية لتجنب البطء وفقدان البيانات. عند ضعف الاتصال ستظهر حالة: الحفظ المركزي مؤجل.</div>
+  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تتم مزامنة ثنائية مع Google Sheet في الخلفية. في الإصدار V5.1 يتم رفع البيانات المحلية وجلب البيانات المركزية تلقائياً كل 30 ثانية، مع زر تحديث من السحابة لضمان ظهور نفس البيانات في Chrome وباقي المتصفحات.</div>
   <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
   <div class="card">
     <div class="r2">
@@ -281,7 +281,7 @@ tr:hover td{background:#F8FAFD}
       </div>
       <div class="session-tools">
         <input type="text" id="session-search" class="session-search" placeholder="بحث بالرمز / الدورة / المدرب" oninput="renderSessionHistory()">
-        <button class="bs" onclick="renderSessionHistory()"><i class="ti ti-refresh"></i> تحديث القائمة</button>
+        <button class="bs" onclick="forceCloudRefresh(function(){renderSessionHistory();})"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button><button class="bs" onclick="renderSessionHistory()"><i class="ti ti-refresh"></i> تحديث محلي</button>
       </div>
     </div>
     <div id="session-history-wrap" class="session-empty">جاري تحميل الجلسات السابقة...</div>
@@ -882,12 +882,31 @@ function postCentralAsync(payload,timeoutMs){
       .catch(function(){if(done)return;done=true;clearTimeout(timer);resolve(null);});
   });
 }
-function recordTimeKey(r){return new Date((r&&r.lastUpdate)||0).getTime()||0;}
+function recordTimeKey(r){return new Date((r&&r.lastUpdate)||(r&&r.updatedAt)||(r&&r.modified)||(r&&r.created)||0).getTime()||0;}
+function objectTimeKey(o){return new Date((o&&o.lastUpdate)||(o&&o.updatedAt)||(o&&o.modified)||(o&&o.created)||0).getTime()||0;}
+function countDBRecords(db){db=normalizeDB(db);var c=0;Object.keys(db.records||{}).forEach(function(k){c+=(db.records[k]||[]).length;});return c;}
+function countDBSessions(db){db=normalizeDB(db);return Object.keys(db.sessions||{}).length;}
+function updateSyncMeta(extra){
+  var el=document.getElementById('sync-meta'); if(!el)return;
+  var db=localGetDB(), pending=getOutbox().length;
+  var last=localStorage.getItem(STORAGE_KEY+'_last_cloud_pull')||'';
+  var time=last?new Date(last).toLocaleTimeString('ar-OM',{hour:'2-digit',minute:'2-digit'}):'لم تتم';
+  el.textContent='محلي: '+countDBSessions(db)+' جلسة / '+countDBRecords(db)+' سجل · معلّق: '+pending+' · آخر تحديث: '+time+(extra?' · '+extra:'');
+}
+function mergeObjectsByTime(remoteObj,localObj){
+  var out={}, keys=new Set(Object.keys(remoteObj||{}).concat(Object.keys(localObj||{})));
+  keys.forEach(function(k){
+    var r=(remoteObj||{})[k], l=(localObj||{})[k];
+    if(r&&!l)out[k]=r; else if(l&&!r)out[k]=l;
+    else if(l&&r)out[k]=(objectTimeKey(l)>=objectTimeKey(r)?l:r);
+  });
+  return out;
+}
 function mergeDB(local,remote){
   local=normalizeDB(local); remote=normalizeDB(remote);
   var out=normalizeDB({sessions:{},records:{},banks:{}});
-  Object.assign(out.sessions,remote.sessions||{},local.sessions||{});
-  Object.assign(out.banks,remote.banks||{},local.banks||{});
+  out.sessions=mergeObjectsByTime(remote.sessions||{},local.sessions||{});
+  out.banks=mergeObjectsByTime(remote.banks||{},local.banks||{});
   var codes=new Set(Object.keys(remote.records||{}).concat(Object.keys(local.records||{})));
   codes.forEach(function(code){
     var m={};
@@ -903,22 +922,23 @@ function mergeDB(local,remote){
 function getDB(){
   if(DB_CACHE)return DB_CACHE;
   DB_CACHE=localGetDB();
-  // تحديث مركزي هادئ دون تعطيل واجهة المتدرب
   backgroundPull(false);
   return DB_CACHE;
 }
 function setDB(d){
   d=normalizeDB(d);
   DB_CACHE=d;
-  localSetDB(d); // حفظ فوري لا يعتمد على الشبكة
+  localSetDB(d);
   queueCentralSave(d);
-  setStatus('تم الحفظ محلياً — المزامنة المركزية تعمل بالخلفية','#0F6E56');
+  updateSyncMeta();
+  setStatus('تم الحفظ محلياً — سيتم رفعه وجلب أحدث نسخة مركزية تلقائياً','#0F6E56');
 }
 function queueCentralSave(d){
   if(!CENTRAL_STORAGE_ENABLED)return;
   var q=getOutbox();
   q.push({type:'setDB',action:'setDB',db:normalizeDB(d),updatedAt:new Date().toISOString(),client:CLIENT_ID});
   setOutbox(q.slice(-50));
+  updateSyncMeta();
   scheduleFlush(1500);
 }
 function recordKey(code,rec){return String(code||'')+'__'+String((rec&&rec.eid)||(rec&&rec.id)||(rec&&rec.name)||'');}
@@ -927,6 +947,7 @@ function queueRecordUpsert(code,rec,urgent){
   var q=getOutbox().filter(function(x){return !(x.type==='record' && x.key===recordKey(code,rec));});
   q.push({type:'record',action:'upsertRecord',key:recordKey(code,rec),code:code,record:rec,updatedAt:new Date().toISOString(),client:CLIENT_ID});
   setOutbox(q);
+  updateSyncMeta();
   scheduleFlush(urgent?100:1200);
 }
 function saveTraineeRecord(code,rec,urgent){
@@ -939,7 +960,8 @@ function saveTraineeRecord(code,rec,urgent){
   DB_CACHE=db;
   localSetDB(db);
   queueRecordUpsert(code,rec,urgent);
-  setStatus('تم الحفظ محلياً فوراً — لن يتوقف انتقالك بسبب Google Sheet','#0F6E56');
+  updateSyncMeta();
+  setStatus('تم الحفظ محلياً فوراً — المزامنة الثنائية تعمل بالخلفية','#0F6E56');
 }
 function mergeRecordIntoDB(db,code,rec){
   db=normalizeDB(db);
@@ -955,67 +977,117 @@ function scheduleFlush(delay){
   clearTimeout(SYNC_TIMER);
   SYNC_TIMER=setTimeout(flushOutbox,delay||1500);
 }
-function flushOutbox(){
-  if(SYNC_BUSY||!CENTRAL_STORAGE_ENABLED)return;
+function setCloudSynced(merged){
+  DB_CACHE=normalizeDB(merged||localGetDB());
+  localSetDB(DB_CACHE);
+  localStorage.setItem(STORAGE_KEY+'_last_cloud_pull',new Date().toISOString());
+  updateSyncMeta();
+}
+function safeSetMergedDB(candidate,cb){
+  candidate=normalizeDB(candidate||localGetDB());
+  postCentralAsync({action:'getDB'},8000).then(function(remoteRes){
+    var remote=remoteRes?normalizeDB(remoteRes.db||remoteRes):emptyDB();
+    var merged=mergeDB(candidate,remote);
+    postCentralAsync({action:'setDB',db:merged,client:CLIENT_ID,updatedAt:new Date().toISOString(),mode:'v5_1_bidirectional_merge'},12000).then(function(r2){
+      if(r2&&r2.ok===true){setCloudSynced(merged); if(cb)cb(true,merged);}
+      else{if(cb)cb(false,candidate);}
+    });
+  });
+}
+function flushOutbox(cb){
+  if(SYNC_BUSY||!CENTRAL_STORAGE_ENABLED){if(cb)cb(false);return;}
   var q=getOutbox();
-  if(!q.length)return;
+  if(!q.length){updateSyncMeta(); if(cb)cb(true);return;}
   SYNC_BUSY=true;
-  setStatus('جاري مزامنة العناصر غير المرسلة: '+q.length,'#C0A500');
-  var batch={action:'batchUpsertRecords',items:q.filter(function(x){return x.type==='record';}),client:CLIENT_ID,updatedAt:new Date().toISOString()};
+  setStatus('جاري رفع البيانات المحلية: '+q.length+' عنصر','#C0A500');
+  updateSyncMeta('رفع...');
+  var records=q.filter(function(x){return x.type==='record';});
   var full=q.filter(function(x){return x.type!=='record';}).slice(-1)[0];
-  var payload=batch.items.length?batch:full;
-  postCentralAsync(payload,10000).then(function(res){
-    if(res&&res.ok===true){
-      if(batch.items.length){setOutbox(q.filter(function(x){return x.type!=='record';}));}
-      else{setOutbox([]);}
-      SYNC_BUSY=false;
-      setStatus('تمت مزامنة السجلات المركزية بنجاح','#28A745');
-      if(getOutbox().length)scheduleFlush(600);
-      return;
-    }
-    // توافق خلفي: إذا لم يدعم Apps Script الحفظ الجزئي، ندمج السجلات محلياً مع آخر نسخة مركزية ثم نرفع نسخة مدمجة.
-    if(batch.items.length){
+  if(records.length){
+    var batch={action:'batchUpsertRecords',items:records,client:CLIENT_ID,updatedAt:new Date().toISOString()};
+    postCentralAsync(batch,10000).then(function(res){
+      if(res&&res.ok===true){
+        setOutbox(q.filter(function(x){return x.type!=='record';}));
+        SYNC_BUSY=false;
+        setStatus('تم رفع سجلات المتدربين — جاري جلب أحدث نسخة','#28A745');
+        backgroundPull(true,function(){if(getOutbox().length)scheduleFlush(600); if(cb)cb(true);});
+        return;
+      }
       postCentralAsync({action:'getDB'},8000).then(function(remoteRes){
         var db=remoteRes?normalizeDB(remoteRes.db||remoteRes):localGetDB();
-        batch.items.forEach(function(it){db=mergeRecordIntoDB(db,it.code,it.record);});
-        postCentralAsync({action:'setDB',db:db,client:CLIENT_ID,updatedAt:new Date().toISOString(),mode:'merged-record-fallback'},12000).then(function(r2){
+        records.forEach(function(it){db=mergeRecordIntoDB(db,it.code,it.record);});
+        postCentralAsync({action:'setDB',db:db,client:CLIENT_ID,updatedAt:new Date().toISOString(),mode:'v5_1_records_merge_fallback'},12000).then(function(r2){
           SYNC_BUSY=false;
           if(r2&&r2.ok===true){
-            DB_CACHE=mergeDB(localGetDB(),db);localSetDB(DB_CACHE);
+            setCloudSynced(mergeDB(localGetDB(),db));
             setOutbox(q.filter(function(x){return x.type!=='record';}));
-            setStatus('تمت المزامنة المركزية بطريقة الدمج الآمن','#28A745');
-            if(getOutbox().length)scheduleFlush(600);
+            setStatus('تمت مزامنة السجلات بطريقة الدمج الآمن','#28A745');
+            backgroundPull(true,function(){if(getOutbox().length)scheduleFlush(600); if(cb)cb(true);});
           }else{
-            setStatus('المزامنة مؤجلة — بيانات المتدرب محفوظة محلياً ولن تضيع','#A32D2D');scheduleFlush(12000);
+            setStatus('المزامنة مؤجلة — البيانات محفوظة محلياً','#A32D2D');updateSyncMeta('مؤجلة');scheduleFlush(12000); if(cb)cb(false);
           }
         });
       });
-    }else{
+    });
+    return;
+  }
+  if(full&&full.db){
+    safeSetMergedDB(full.db,function(ok){
       SYNC_BUSY=false;
-      setStatus('الحفظ المركزي مؤجل — البيانات محفوظة محلياً','#A32D2D');scheduleFlush(12000);
-    }
-  });
+      if(ok){setOutbox([]);setStatus('تم رفع قاعدة البيانات بعد دمجها مع السحابة','#28A745');backgroundPull(true,function(){if(cb)cb(true);});}
+      else{setStatus('تعذر رفع قاعدة البيانات — ستتم إعادة المحاولة','#A32D2D');scheduleFlush(12000); if(cb)cb(false);}
+    });
+    return;
+  }
+  SYNC_BUSY=false; if(cb)cb(false);
 }
 function backgroundPull(force,cb){
   if(!CENTRAL_STORAGE_ENABLED||PULL_BUSY){if(cb)cb(false);return;}
   var now=Date.now();
-  if(!force && now-LAST_PULL<30000){if(cb)cb(true);return;}
+  if(!force && now-LAST_PULL<30000){updateSyncMeta(); if(cb)cb(true);return;}
   PULL_BUSY=true; LAST_PULL=now;
-  postCentralAsync({action:'getDB'},8000).then(function(res){
+  setStatus('جاري جلب أحدث البيانات من Google Sheet','#C0A500');
+  updateSyncMeta('جلب...');
+  postCentralAsync({action:'getDB',client:CLIENT_ID,updatedAt:new Date().toISOString(),mode:'v5_1_pull'},10000).then(function(res){
     PULL_BUSY=false;
     if(res){
       var remote=normalizeDB(res.db||res);
-      DB_CACHE=mergeDB(localGetDB(),remote);
-      localSetDB(DB_CACHE);
-      setStatus('تم تحديث النسخة المحلية من المركز','#28A745');
+      var merged=mergeDB(localGetDB(),remote);
+      setCloudSynced(merged);
+      setStatus('تم تحديث البيانات المحلية من Google Sheet','#28A745');
+      if(currentCode&&document.getElementById('adm-panel')&&document.getElementById('adm-panel').style.display!=='none'){
+        var sess=merged.sessions[currentCode], recs=(merged.records&&merged.records[currentCode])||[];
+        if(sess)renderAdmPanel(currentCode,sess,recs);
+      }
+      renderSessionHistory();
       if(cb)cb(true);
     }else{
       setStatus('تعذر جلب البيانات المركزية — العمل مستمر محلياً','#A32D2D');
+      updateSyncMeta('تعذر الجلب');
       if(cb)cb(false);
     }
   });
 }
+function manualFullSync(cb,silent){
+  setStatus('بدء مزامنة كاملة: رفع ثم جلب ثم دمج','#C0A500');
+  flushOutbox(function(){backgroundPull(true,function(ok){
+    updateSyncMeta(ok?'مكتمل':'غير مكتمل');
+    if(ok&&!silent)showToast('adm-toast','تمت المزامنة الكاملة بنجاح.','tok');
+    if(typeof cb==='function')cb(ok);
+  });});
+}
+function forceCloudRefresh(cb){
+  backgroundPull(true,function(ok){
+    if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');
+    if(typeof cb==='function')cb(ok);
+  });
+}
 function forceRefreshThen(fn){backgroundPull(true,function(){if(typeof fn==='function')fn();});}
+function startBidirectionalSync(){
+  updateSyncMeta();
+  setTimeout(function(){manualFullSync(null,true);},1200);
+  setInterval(function(){manualFullSync(null,true);},30000);
+}
 window.addEventListener('online',function(){setStatus('عاد الاتصال — جاري المزامنة','#C0A500');scheduleFlush(300);backgroundPull(true);});
 window.addEventListener('beforeunload',function(){try{flushOutbox();}catch(e){}});
 /* ===================== UTILS ===================== */
@@ -1120,7 +1192,7 @@ function initDefaultBank(){
   for(var k in db.banks){if(db.banks[k].isDefault){hasDefault=true;break;}}
   if(!hasDefault){
     var id=genId();
-    db.banks[id]={id:id,name:'الإدارة بالأهداف ومؤشرات الأداء — الأساسي',desc:'20 سؤالاً من ورشة الإدارة بالأهداف وبناء مؤشرات الأداء الرئيسية',questions:DEFAULT_QS,isDefault:true,created:new Date().toISOString()};
+    db.banks[id]={id:id,name:'الإدارة بالأهداف ومؤشرات الأداء — الأساسي',desc:'20 سؤالاً من ورشة الإدارة بالأهداف وبناء مؤشرات الأداء الرئيسية',questions:DEFAULT_QS,isDefault:true,created:new Date().toISOString(),updatedAt:new Date().toISOString()};
     setDB(db);
   }
 }
@@ -1173,10 +1245,11 @@ function saveBankMeta(){
   if(!db.banks)db.banks={};
   var id=editingBankId||genId();
   if(!db.banks[id]){
-    db.banks[id]={id:id,name:name,desc:document.getElementById('mb-desc').value.trim(),questions:[],created:new Date().toISOString()};
+    db.banks[id]={id:id,name:name,desc:document.getElementById('mb-desc').value.trim(),questions:[],created:new Date().toISOString(),updatedAt:new Date().toISOString()};
   } else {
     db.banks[id].name=name;
     db.banks[id].desc=document.getElementById('mb-desc').value.trim();
+    db.banks[id].updatedAt=new Date().toISOString();
   }
   setDB(db);
   closeModal('modal-bank');
@@ -1326,7 +1399,7 @@ function duplicateBank(id){
   var orig=db.banks[id];
   var newId=genId();
   db.banks[newId]={id:newId,name:'نسخة من: '+orig.name,desc:orig.desc,
-    questions:JSON.parse(JSON.stringify(orig.questions)),created:new Date().toISOString()};
+    questions:JSON.parse(JSON.stringify(orig.questions)),created:new Date().toISOString(),updatedAt:new Date().toISOString()};
   setDB(db);
   renderBanksList();
   showToast('qb-toast','تم نسخ البنك','tok');
@@ -1582,7 +1655,7 @@ function createSession(){
   var sess={code:code,batch:batch,trainer:trainer,bankId:bankId,bankName:bank.name,
     start:document.getElementById('a-start').value.trim()||new Date().toISOString().slice(0,10),
     deadline:document.getElementById('a-deadline').value.trim(),
-    created:new Date().toISOString()};
+    created:new Date().toISOString(),updatedAt:new Date().toISOString()};
   db.sessions[code]=sess;
   db.records[code]=[];
   setDB(db);
@@ -1597,7 +1670,8 @@ function createSession(){
   hide('a-qbank-preview');
 }
 
-function loadSession(){
+function loadSession(skipCloud){
+  if(!skipCloud && CENTRAL_STORAGE_ENABLED){setStatus('جاري تحديث البيانات من السحابة قبل التحميل','#C0A500');return backgroundPull(true,function(){loadSession(true);});}
   var code=(document.getElementById('a-code').value.trim().toUpperCase()||currentCode||'');
   if(!code||code.length!==6){showToast('adm-toast','أدخل رمزاً من 6 أحرف.','ter');return;}
   var db=getDB();
@@ -2327,6 +2401,7 @@ try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.pars
 initDefaultBank();tryRestoreDraft();
 populateBankSelect();
 renderSessionHistory();
+startBidirectionalSync();
 </script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('#traineesTable');if(!t)return;const h=t.tHead&&t.tHead.rows[0];if(h){let th=document.createElement('th');th.textContent='م';h.insertBefore(th,h.firstChild);}for(const b of t.tBodies){[...b.rows].forEach((r,i)=>{let td=document.createElement('td');td.textContent=i+1;r.insertBefore(td,r.firstChild);});}});</script></body>
 </html>
