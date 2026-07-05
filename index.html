@@ -218,7 +218,7 @@ tr:hover td{background:#F8FAFD}
 </div>
 <div class="sbar">
   <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
-  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="publishMasterSnapshot(true)"><i class="ti ti-database-export"></i> تهيئة مركزية</button>
+  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button id="btn-manual-full-sync" class="bs sync-admin-only" style="display:none;padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button id="btn-force-cloud-refresh" class="bs sync-admin-only" style="display:none;padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button><button id="btn-publish-master" class="bs sync-admin-only" style="display:none;padding:3px 8px;font-size:11px" onclick="publishMasterSnapshot(true)"><i class="ti ti-database-export"></i> تهيئة مركزية</button>
 </div>
 <div id="notify-stack" class="notify-stack" aria-live="polite" aria-atomic="false"></div>
 <div class="content">
@@ -871,6 +871,38 @@ function localSetDB(d){
 }
 function getOutbox(){return safeParseJSON(localStorage.getItem(OUTBOX_KEY)||'[]',[]);}
 function setOutbox(q){try{localStorage.setItem(OUTBOX_KEY,JSON.stringify(q.slice(-200)));}catch(e){console.warn(e);}}
+/* ===== Deletion tombstones =====
+   A deletion is queued as an async event and can take a few seconds to reach the
+   server. In that window, a background sync can fetch the still-active copy from
+   the server and merge it back in locally, since mergeDB only compares timestamps
+   and has no concept of "this was deliberately deleted." Tombstones fix that: once
+   a record is deleted locally, its key is remembered here, and mergeDB drops any
+   incoming copy of that key (local or remote) that isn't newer than the deletion. */
+var DELETED_TOMBSTONE_KEY = STORAGE_KEY + '_deleted_tombstones';
+function getTombstones(){return safeParseJSON(localStorage.getItem(DELETED_TOMBSTONE_KEY)||'{}',{});}
+function setTombstones(m){try{localStorage.setItem(DELETED_TOMBSTONE_KEY,JSON.stringify(m||{}));}catch(e){console.warn(e);}}
+function markDeletedTombstone(code,rec){
+  var k=String(code||'').toUpperCase()+'/'+traineeKeySafe(rec);
+  var m=getTombstones();
+  m[k]=Date.now();
+  setTombstones(m);
+}
+function isTombstoned(code,rec){
+  var k=String(code||'').toUpperCase()+'/'+traineeKeySafe(rec);
+  var m=getTombstones();
+  if(!m[k])return false;
+  var recTime=recordTimeKey(rec);
+  // Tombstone wins unless the record has a genuinely newer update than the deletion
+  // (e.g., an admin intentionally re-registered the same trainee afterwards).
+  return recTime <= m[k];
+}
+// traineeKey() is defined later in the file (event-queue section) but tombstones are
+// needed earlier by mergeDB, so provide a safe fallback that mirrors its logic exactly.
+function traineeKeySafe(rec){
+  if(typeof traineeKey==='function')return traineeKey(rec);
+  rec=rec||{};
+  return String(rec.eid||rec.employeeId||rec.id||rec.name||'unknown').trim().toLowerCase().replace(/\s+/g,'_');
+}
 function postCentralAsync(payload,timeoutMs){
   timeoutMs=timeoutMs||9000;
   return new Promise(function(resolve){
@@ -916,7 +948,10 @@ function mergeDB(local,remote){
       var k=r.id||r.eid||r.name;
       if(!m[k]||recordTimeKey(r)>=recordTimeKey(m[k]))m[k]=r;
     });
-    out.records[code]=Object.values(m);
+    // Drop anything a deletion tombstone says should be gone, regardless of which
+    // side (local or remote) it came from — this is what stops a lagging background
+    // sync from silently bringing a just-deleted trainee record back.
+    out.records[code]=Object.values(m).filter(function(r){return !isTombstoned(code,r);});
   });
   return out;
 }
@@ -1130,6 +1165,13 @@ function activateRole(r){
     var v=document.getElementById('v-'+x),b=document.getElementById('rb-'+x);
     if(v)v.classList.toggle('on',x===r);
     if(b)b.classList.toggle('on',x===r);
+  });
+  // The full-sync / cloud-refresh / master-init buttons are admin tools that would
+  // only confuse a trainee logging in to take a test — show them only in admin views.
+  var isAdminView = (r==='stats'||r==='adm'||r==='qb'||r==='sec');
+  ['btn-manual-full-sync','btn-force-cloud-refresh','btn-publish-master'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.style.display = isAdminView ? '' : 'none';
   });
   if(r==='stats')renderStatsDashboard();
   if(r==='qb')renderBanksList();
@@ -1937,29 +1979,15 @@ function recordKeyForDelete(r,i){
   r=r||{};
   return encodeURIComponent(r.id||r.eid||r.employeeId||r.name||String(i));
 }
-function deleteEvaluationRecord(key){
-  if(!currentCode){showToast('adm-toast','حمّل جلسة أولاً.','ter');return;}
-  var db=getDB();
-  var recs=(db.records&&db.records[currentCode])||[];
-  var raw=decodeURIComponent(String(key||''));
-  var idx=recs.findIndex(function(r){
-    return String(r.id||'')===raw || String(r.eid||'')===raw || String(r.employeeId||'')===raw || String(r.name||'')===raw;
-  });
-  if(idx<0){showToast('adm-toast','لم يتم العثور على سجل التقييم المحدد.','ter');return;}
-  var r=recs[idx]||{};
-  var label=(r.name||'متدرب')+(r.eid?' - '+r.eid:'');
-  if(!confirm('حذف سجل التقييم المحدد؟\n\n'+label+'\n\nسيتم حذف نتيجة قبل/بعد الدورة وتقييم الدورة والمدرب لهذا السجل فقط.'))return;
-  recs.splice(idx,1);
-  if(!db.records)db.records={};
-  db.records[currentCode]=recs;
-  setDB(db);
-  localStorage.setItem('mtcit_last_deleted_record',JSON.stringify({code:currentCode,record:r,deletedAt:new Date().toISOString()}));
-  loadSession();
-  showToast('adm-toast','تم حذف سجل التقييم المحدد.','tok');
-}
+// NOTE: deleteEvaluationRecord is defined once, further down, using the event-queue
+// + deletion-tombstone model (search for "deleteEvaluationRecord=function"). An older,
+// dead duplicate used to live here calling setDB(db) directly with no tombstone —
+// it was already unreachable (JS uses the last assignment), but is removed entirely
+// now to avoid any confusion during future edits.
 function renderTable(recs){
   var tbody=document.getElementById('adm-tbody');
   if(!tbody)return;
+  recs=(recs||[]).filter(function(r){return !(r&&r.deleted);});
   if(!recs||!recs.length){tbody.innerHTML='<tr><td colspan="12" style="text-align:center;color:#888;padding:20px">لا متدربين بعد</td></tr>';return;}
   tbody.innerHTML=recs.map(function(r,i){
     r=r||{};
@@ -2784,6 +2812,7 @@ deleteEvaluationRecord=function(key){
   var rec=recs[idx];
   if(!confirm('حذف سجل التقييم المحدد؟ سيتم تسجيل DELETE_RECORD مركزياً.'))return;
   rec.deleted=true; rec.deletedAt=new Date().toISOString(); rec.lastUpdate=rec.deletedAt;
+  markDeletedTombstone(currentCode,rec);
   queueTraineeEvent(currentCode,rec,'DELETE_RECORD',true,{deleted:true});
   recs.splice(idx,1); db.records[currentCode]=recs; DB_CACHE=db; localSetDB(db);
   renderAdmPanel(currentCode,db.sessions[currentCode],recs); renderSessionHistory();
