@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V5.6 - Event Queue Google Sheet Sync</title>
+<title>Workshops Evaluation V5.7 - Master Snapshot + Event Queue Sync</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -205,7 +205,7 @@ tr:hover td{background:#F8FAFD}
 <div class="app">
 <div class="topbar">
   <div>
-    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.1</span></div>
+    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.7</span></div>
     <div class="ts">اختبار المتدرب قبل وبعد الدورة وتقييم الدورة</div>
   </div>
   <div class="rtog">
@@ -218,7 +218,7 @@ tr:hover td{background:#F8FAFD}
 </div>
 <div class="sbar">
   <span id="sdot" style="width:8px;height:8px;border-radius:50%;background:#28A745;display:inline-block;flex-shrink:0"></span>
-  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button>
+  <span id="stxt">جاهز</span><span id="sync-meta" style="font-size:11px;color:#777;margin-right:8px">—</span><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px;margin-right:auto" onclick="manualFullSync()"><i class="ti ti-refresh"></i> مزامنة كاملة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="forceCloudRefresh()"><i class="ti ti-cloud-download"></i> تحديث من السحابة</button><button class="bs sync-admin-only" style="padding:3px 8px;font-size:11px" onclick="publishMasterSnapshot(true)"><i class="ti ti-database-export"></i> تهيئة مركزية</button>
 </div>
 <div id="notify-stack" class="notify-stack" aria-live="polite" aria-atomic="false"></div>
 <div class="content">
@@ -237,7 +237,7 @@ tr:hover td{background:#F8FAFD}
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
-  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.6 لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين، لذلك لا تتأثر السرعة حتى مع عدد كبير من المستخدمين.</div>
+  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.7 يتم تحميل الجلسات وبنوك الأسئلة تلقائياً من Google Sheet عند أول فتح للبرنامج، ثم تُرسل بيانات المتدربين كأحداث خفيفة لا تؤثر على سرعة الإدخال حتى مع عدد كبير من المستخدمين.</div>
   <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
   <div class="card">
     <div class="r2">
@@ -2400,12 +2400,12 @@ function importEvaluationFile(){
 
 
 
-/* ===================== V5.6 CANONICAL CLOUD SYNC PATCH =====================
+/* ===================== V5.7 CANONICAL CLOUD SYNC PATCH =====================
    يعالج اختلاف البيانات بين المتصفحات والنسخة المحلية ونسخة GitHub.
    السبب الشائع: كل متصفح يملك localStorage مستقل. لذلك أصبحت Google Sheet
    هي المصدر الموحد، وكل مزامنة كاملة تنفذ: تنزيل السحابة -> دمج المحلي -> رفع الدمج -> تحقق.
 =================================================================== */
-var PROGRAM_VERSION = 'V5.6';
+var PROGRAM_VERSION = 'V5.7';
 var CLOUD_SCHEMA_VERSION = 'workshops-evaluation-cloud-db-v2';
 function parseMaybeJSON(v){
   if(!v)return null;
@@ -2536,7 +2536,7 @@ function backgroundPull(force,cb){
   });
 }
 function manualFullSync(cb,silent){
-  setStatus('مزامنة V5.6: أحداث خفيفة + دمج مركزي','#C0A500');
+  setStatus('مزامنة V5.7: Master Snapshot + أحداث خفيفة','#C0A500');
   if(!silent)showToast('adm-toast','جاري توحيد البيانات بين المتصفحات وGoogle Sheet...','tin');
   markAllLocalForCloud();
   flushOutbox(function(ok){
@@ -2553,7 +2553,7 @@ function forceCloudRefresh(cb){
   });
 }
 function startBidirectionalSync(){
-  updateSyncMeta('V5.6');
+  updateSyncMeta('V5.7');
   setTimeout(function(){manualFullSync(null,true);},900);
   setInterval(function(){manualFullSync(null,true);},25000);
   window.addEventListener('storage',function(e){
@@ -2562,13 +2562,13 @@ function startBidirectionalSync(){
 }
 
 
-/* ===================== V5.6 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
+/* ===================== V5.7 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
    الهدف: لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين.
    كل متدرب يحفظ محلياً فوراً ثم يُرسل حدث صغير إلى Google Sheet:
    REGISTER_TRAINEE / PRE_SUBMIT / POST_SUBMIT / COURSE_EVALUATION / DELETE_RECORD
    يتعامل Google Apps Script مع هذه الأحداث كسجل مركزي ويعيد بناء Records عند الحاجة.
 =================================================================== */
-PROGRAM_VERSION='V5.6';
+PROGRAM_VERSION='V5.7';
 var EVENT_QUEUE_KEY = STORAGE_KEY + '_event_queue_v56';
 var EVENT_SENT_KEY = STORAGE_KEY + '_event_sent_signatures_v56';
 var EVENT_FLUSH_BUSY=false;
@@ -2757,11 +2757,11 @@ backgroundPull=function(force,cb){
 };
 manualFullSync=function(cb,silent){
   if(!silent)showToast('adm-toast','جاري رفع أحداث المتدربين ثم دمج إعدادات المشرف...','tin');
-  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.6 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
+  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.7 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
 };
 forceCloudRefresh=function(cb){backgroundPull(true,function(ok){if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');else showToast('adm-toast','تعذر التحديث من Google Sheet.','ter'); if(typeof cb==='function')cb(ok);});};
 startBidirectionalSync=function(){
-  updateSyncMeta('V5.6 Event Queue');
+  updateSyncMeta('V5.7 Event Queue');
   setTimeout(function(){flushEventQueue();backgroundPull(false);},900);
   setInterval(function(){flushEventQueue();},5000);
   setInterval(function(){backgroundPull(false);},60000);
@@ -2792,15 +2792,15 @@ deleteEvaluationRecord=function(key){
 
 
 
-/* ===================== V5.6 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
+/* ===================== V5.7 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
    معالجة رسالة: "تعذر رفع الأحداث مباشرة".
    السبب غالباً CORS / Web App قديم / عدم استقبال payload من form-urlencoded.
-   V5.6 يستخدم 3 قنوات بالترتيب:
+   V5.7 يستخدم 3 قنوات بالترتيب:
    1) fetch JSON مباشر.
    2) form POST داخل iframe مخفي لتجاوز مشاكل CORS بدون تعطيل المتدرب.
    3) sendBeacon عند إغلاق الصفحة.
 =================================================================== */
-PROGRAM_VERSION='V5.6';
+PROGRAM_VERSION='V5.7';
 var EVENT_ARCHIVE_KEY = STORAGE_KEY + '_event_archive_v56';
 function archiveEventsV55(events,channel){
   try{
@@ -2892,14 +2892,14 @@ sendEventsBeacon=function(){
 };
 
 
-/* ===================== V5.6 TRAINEE CODE CHECK FIX =====================
+/* ===================== V5.7 TRAINEE CODE CHECK FIX =====================
    إصلاح الرسالة المتكررة عند المتدرب:
    - لا يوجد استدعاء تكراري trJoin -> forceRefreshThen -> trJoin.
    - التحقق المركزي يتم مرة واحدة فقط لكل ضغطة، مع قفل مؤقت لمنع التكرار.
    - رسالة "جاري التحقق" تظهر داخل شاشة المتدرب فقط ولا تظهر كإشعار عائم متكرر.
    - بعد الجلب من Google Sheet يتم إكمال الدخول إن وجد الرمز، أو إظهار خطأ واحد فقط.
 =================================================================== */
-PROGRAM_VERSION='V5.6';
+PROGRAM_VERSION='V5.7';
 var TRAINEE_CODE_CHECK_BUSY=false;
 var TRAINEE_LAST_CHECK={code:'',at:0};
 function setTraineeInlineMessage(msg,type){
@@ -2986,12 +2986,160 @@ showToast=function(id,m,t){
   _showToast_before_v56(id,m,t);
 };
 
+
+/* ===================== V5.7 MASTER DATA BOOTSTRAP PATCH =====================
+   السبب الذي ظهر في Incognito/متصفح جديد: لا يوجد LocalStorage، والبرنامج لا يملك
+   جلسات أو بنوك أسئلة محلية. V5.7 يفصل بين:
+   1) Master Snapshot: الجلسات + بنوك الأسئلة + الإعدادات، تُحمّل عند أول فتح.
+   2) Event Queue: بيانات المتدربين والاختبارات والتقييم، تُرسل كأحداث خفيفة.
+=================================================================== */
+PROGRAM_VERSION='V5.7';
+var MASTER_BOOTSTRAP_READY=false;
+var MASTER_BOOTSTRAP_BUSY=false;
+var MASTER_BOOTSTRAP_ERROR='';
+var MASTER_BOOTSTRAP_WAITERS=[];
+var MASTER_SNAPSHOT_KEY=STORAGE_KEY+'_master_snapshot_v57';
+function hasMasterData(db){
+  db=normalizeDB(db);
+  return Object.keys(db.sessions||{}).length>0 || Object.keys(db.banks||{}).length>0;
+}
+function masterSummary(db){
+  db=normalizeDB(db);
+  return Object.keys(db.sessions||{}).length+' جلسة / '+Object.keys(db.banks||{}).length+' بنك أسئلة / '+countDBRecords(db)+' سجل';
+}
+function cloudGetMaster(cb){
+  if(!CENTRAL_STORAGE_ENABLED){cb(null);return;}
+  postCentralAsync({action:'getMasterData',client:CLIENT_ID,version:PROGRAM_VERSION,ts:new Date().toISOString()},14000).then(function(res){
+    if(res&&(res.ok===true||res.success===true)) cb(normalizeDB(res.db||res.master||{}));
+    else cb(null);
+  });
+}
+function setMasterFromCloud(remote,source){
+  if(!remote)return false;
+  var local=localGetDB();
+  var merged=mergeDB(local,normalizeDB(remote));
+  DB_CACHE=normalizeDB(merged);
+  localSetDB(DB_CACHE);
+  try{localStorage.setItem(MASTER_SNAPSHOT_KEY,JSON.stringify({source:source||'cloud',at:new Date().toISOString(),sessions:Object.keys(DB_CACHE.sessions||{}).length,banks:Object.keys(DB_CACHE.banks||{}).length}));}catch(e){}
+  localStorage.setItem(STORAGE_KEY+'_last_cloud_pull',new Date().toISOString());
+  populateBankSelect();
+  renderSessionHistory();
+  updateSyncMeta('Master: '+masterSummary(DB_CACHE));
+  return hasMasterData(DB_CACHE);
+}
+function publishMasterSnapshot(showMsg,cb){
+  var db=normalizeDB(localGetDB());
+  if(!hasMasterData(db)){
+    if(showMsg)showToast('adm-toast','لا توجد جلسات أو بنوك أسئلة محلية لنشرها مركزياً. أنشئ بنك أسئلة/جلسة أولاً أو استورد البيانات.','ter');
+    if(cb)cb(false); return;
+  }
+  setStatus('جاري نشر Master Snapshot للجلسات وبنوك الأسئلة إلى Google Sheet','#C0A500');
+  postCentralAsync({action:'publishMasterData',db:db,client:CLIENT_ID,version:PROGRAM_VERSION,updatedAt:new Date().toISOString()},18000).then(function(res){
+    var ok=!!(res&&(res.ok===true||res.success===true));
+    if(ok){
+      setStatus('تم نشر البيانات الأساسية مركزياً: '+masterSummary(db),'#28A745');
+      updateSyncMeta('Master منشور');
+      if(showMsg)showToast('adm-toast','تمت تهيئة Google Sheet مركزياً بالجلسات وبنوك الأسئلة. الآن ستظهر في المتصفح الجديد وIncognito.','tok');
+    }else{
+      setStatus('تعذر نشر Master Snapshot — تحقق من Apps Script V5.7 والصلاحيات','#A32D2D');
+      if(showMsg)showToast('adm-toast','تعذر نشر البيانات الأساسية مركزياً. حدّث Google Apps Script إلى V5.7 ثم أعد النشر Web App.','ter');
+    }
+    if(cb)cb(ok);
+  });
+}
+function bootstrapFromCloud(cb){
+  if(MASTER_BOOTSTRAP_READY){if(cb)cb(true);return;}
+  if(MASTER_BOOTSTRAP_BUSY){if(cb)MASTER_BOOTSTRAP_WAITERS.push(cb);return;}
+  MASTER_BOOTSTRAP_BUSY=true;
+  MASTER_BOOTSTRAP_ERROR='';
+  setStatus('جاري تحميل الجلسات وبنوك الأسئلة من Google Sheet','#C0A500');
+  updateSyncMeta('تهيئة مركزية...');
+  var local=localGetDB();
+  if(hasMasterData(local)){
+    MASTER_BOOTSTRAP_READY=true; MASTER_BOOTSTRAP_BUSY=false;
+    updateSyncMeta('Master محلي: '+masterSummary(local));
+    if(cb)cb(true);
+    MASTER_BOOTSTRAP_WAITERS.splice(0).forEach(function(f){try{f(true);}catch(e){}});
+    // تحديث صامت من السحابة بعد فتح الشاشة دون تعطيل المستخدم.
+    setTimeout(function(){cloudGetMaster(function(remote){if(remote&&hasMasterData(remote))setMasterFromCloud(remote,'silent-refresh');});},600);
+    return;
+  }
+  if(!CENTRAL_STORAGE_ENABLED){
+    MASTER_BOOTSTRAP_READY=true; MASTER_BOOTSTRAP_BUSY=false;
+    MASTER_BOOTSTRAP_ERROR='لا يوجد رابط Google Apps Script';
+    if(cb)cb(false); MASTER_BOOTSTRAP_WAITERS.splice(0).forEach(function(f){try{f(false);}catch(e){}}); return;
+  }
+  cloudGetMaster(function(remote){
+    var ok=false;
+    if(remote&&hasMasterData(remote)) ok=setMasterFromCloud(remote,'cloud-bootstrap');
+    MASTER_BOOTSTRAP_READY=true; MASTER_BOOTSTRAP_BUSY=false;
+    if(ok){
+      setStatus('تم تحميل البيانات الأساسية من Google Sheet: '+masterSummary(localGetDB()),'#28A745');
+    }else{
+      MASTER_BOOTSTRAP_ERROR='لا توجد Master Snapshot في Google Sheet أو تعذر تحميلها';
+      setStatus('لم يتم العثور على بيانات أساسية مركزية — يحتاج المشرف إلى تهيئة مركزية','#A32D2D');
+      updateSyncMeta('Master غير موجود');
+    }
+    if(cb)cb(ok);
+    MASTER_BOOTSTRAP_WAITERS.splice(0).forEach(function(f){try{f(ok);}catch(e){}});
+  });
+}
+function ensureBootstrapReady(cb){
+  if(MASTER_BOOTSTRAP_READY){cb(true);return;}
+  bootstrapFromCloud(cb);
+}
+function finishInitialRenderV57(){
+  initDefaultBank();
+  tryRestoreDraft();
+  populateBankSelect();
+  renderSessionHistory();
+  startBidirectionalSync();
+}
+function startAppV57(){
+  try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
+  bootstrapFromCloud(function(ok){
+    // إذا كان Google Sheet لا يحتوي Master Snapshot، نبدأ بالبنك الافتراضي محلياً، لكن لا نعتبره بديلاً عن تهيئة المشرف.
+    finishInitialRenderV57();
+    if(ok){setStatus('جاهز — البيانات الأساسية محملة مركزياً','#28A745');}
+    else{showToast('tr-toast','لم يتم تحميل الجلسات من Google Sheet. إذا كنت متدرباً جديداً فتواصل مع المشرف لعمل تهيئة مركزية.','tin');}
+  });
+}
+// عند فتح شاشة المشرف، تأكد من نشر Master Snapshot بعد إنشاء/تعديل الجلسات وبنوك الأسئلة.
+var _setDB_before_v57=setDB;
+setDB=function(d){
+  _setDB_before_v57(d);
+  if(hasMasterData(d)){
+    clearTimeout(window.__masterPublishTimerV57);
+    window.__masterPublishTimerV57=setTimeout(function(){publishMasterSnapshot(false);},2500);
+  }
+};
+// يمنع البحث عن رمز الجلسة قبل اكتمال تحميل Master Data في Incognito/متصفح جديد.
+var _trJoin_before_v57=trJoin;
+trJoin=function(){
+  var codeEl=document.getElementById('tr-code');
+  var code=codeEl?codeEl.value.trim().toUpperCase():'';
+  if(code.length!==6){_trJoin_before_v57();return;}
+  if(!MASTER_BOOTSTRAP_READY){
+    setTraineeJoinBusy(true);
+    setTraineeInlineMessage('جاري تحميل الجلسات وبنوك الأسئلة من Google Sheet أولاً...','info');
+    return bootstrapFromCloud(function(){
+      setTraineeJoinBusy(false);
+      _trJoin_before_v57();
+    });
+  }
+  _trJoin_before_v57();
+};
+// زر تحديث السحابة في V5.7 يجلب Master Data أولاً ثم الأحداث/السجلات.
+var _forceCloudRefresh_before_v57=forceCloudRefresh;
+forceCloudRefresh=function(cb){
+  cloudGetMaster(function(remote){
+    if(remote&&hasMasterData(remote))setMasterFromCloud(remote,'manual-refresh');
+    _forceCloudRefresh_before_v57(cb);
+  });
+};
+
 /* ===================== INIT ===================== */
-try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
-initDefaultBank();tryRestoreDraft();
-populateBankSelect();
-renderSessionHistory();
-startBidirectionalSync();
+startAppV57();
 </script>
 <script>document.addEventListener('DOMContentLoaded',()=>{const t=document.querySelector('#traineesTable');if(!t)return;const h=t.tHead&&t.tHead.rows[0];if(h){let th=document.createElement('th');th.textContent='م';h.insertBefore(th,h.firstChild);}for(const b of t.tBodies){[...b.rows].forEach((r,i)=>{let td=document.createElement('td');td.textContent=i+1;r.insertBefore(td,r.firstChild);});}});</script></body>
 </html>
