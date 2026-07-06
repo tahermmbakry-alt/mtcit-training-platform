@@ -3039,7 +3039,11 @@ function masterSummary(db){
 function cloudGetMaster(cb){
   if(!CENTRAL_STORAGE_ENABLED){cb(null);return;}
   postCentralAsync({action:'getMasterData',client:CLIENT_ID,version:PROGRAM_VERSION,ts:new Date().toISOString()},14000).then(function(res){
-    if(res&&(res.ok===true||res.success===true)) cb(normalizeDB(res.db||res.master||{}));
+    if(res&&(res.ok===true||res.success===true)){
+      var raw=res.db||res.master||{};
+      if(raw._meta){ syncSetSeq(raw._meta.seq||0); syncSetMVer(raw._meta.masterVersion||''); }
+      cb(normalizeDB(raw));
+    }
     else cb(null);
   });
 }
@@ -3124,6 +3128,148 @@ function finishInitialRenderV57(){
   renderSessionHistory();
   startBidirectionalSync();
 }
+/* =====================================================================
+   V6 INCREMENTAL SYNC ENGINE
+   This block is the LAST thing to (re)assign backgroundPull, manualFullSync,
+   forceCloudRefresh, publishMasterSnapshot and startBidirectionalSync in this
+   file — because of that, it's the version that actually runs; every earlier
+   definition of these functions above is now dead code (kept only for
+   history/diff purposes, not deleted to keep this change reviewable).
+
+   Why: the previous approach re-fetched the ENTIRE database (sessions + banks
+   + every trainee record) on a recurring timer (every 25–60s per browser tab,
+   compounding across every open tab/trainee), which is what caused constant
+   network chatter. This engine instead:
+     1. Fetches the full database exactly ONCE per browser (the existing
+        bootstrapFromCloud/cloudGetMaster call on page load) — that already
+        happens above and is untouched.
+     2. From then on, polls a cheap "what changed since event #N" endpoint
+        (getUpdatesSince) that returns just the new events — a tiny payload
+        when nothing changed, not the whole database.
+     3. Only polls while the tab is actually visible and online — no
+        background-tab or offline network use.
+     4. Also syncs immediately after a local save and right when the tab
+        regains focus or connectivity, so it still feels instant to the user.
+   ===================================================================== */
+var SYNC_SEQ_KEY = STORAGE_KEY + '_sync_seq';
+var SYNC_MVER_KEY = STORAGE_KEY + '_sync_mver';
+var SYNC_PULL_BUSY = false;
+var SYNC_HEARTBEAT_TIMER = null;
+var SYNC_HEARTBEAT_MS = 20000; // was effectively 5–60s of FULL-db polling before; now a cheap incremental check
+
+function syncGetSeq(){ return Number(localStorage.getItem(SYNC_SEQ_KEY))||0; }
+function syncSetSeq(v){ try{localStorage.setItem(SYNC_SEQ_KEY,String(v||0));}catch(e){} }
+function syncGetMVer(){ return localStorage.getItem(SYNC_MVER_KEY)||''; }
+function syncSetMVer(v){ try{localStorage.setItem(SYNC_MVER_KEY,String(v||''));}catch(e){} }
+
+// Replays one server event onto the local in-memory/localStorage records,
+// mirroring the server's own upsertRecord() logic — this is what lets a
+// "what's new since #N" response update local state without a full refetch.
+function applyEventToLocalDB(db,ev){
+  var code=String(ev.sessionCode||'').toUpperCase(); if(!code)return;
+  var rec=safeParseJSON(ev.recordJSON||'null',null) || {
+    id:ev.traineeId,eid:ev.employeeId,name:ev.traineeName,dept:ev.department,title:ev.jobTitle,lastUpdate:ev.timestamp
+  };
+  if(ev.eventType==='DELETE_RECORD'){
+    rec.deleted=true; rec.deletedAt=rec.deletedAt||ev.timestamp;
+    markDeletedTombstone(code,rec);
+  }
+  db.records=db.records||{};
+  var arr=db.records[code]||[];
+  var k=traineeKeySafe(rec);
+  var idx=arr.findIndex(function(r){return traineeKeySafe(r)===k;});
+  if(isTombstoned(code,rec)){
+    if(idx>=0)arr.splice(idx,1);
+  }else if(idx>=0){
+    arr[idx]=rec;
+  }else{
+    arr.push(rec);
+  }
+  db.records[code]=arr;
+}
+
+function syncPullIncremental(force,cb){
+  if(!CENTRAL_STORAGE_ENABLED){ if(cb)cb(false); return; }
+  if(SYNC_PULL_BUSY){ if(cb)cb(false); return; }
+  if(!force && !navigator.onLine){ if(cb)cb(false); return; }
+  if(!force && document.visibilityState==='hidden'){ if(cb)cb(false); return; }
+  SYNC_PULL_BUSY=true;
+  var seq=syncGetSeq();
+  updateSyncMeta('تحقّق من التحديثات...');
+  postCentralAsync({action:'getUpdatesSince',seq:seq,masterVersion:syncGetMVer(),client:CLIENT_ID},14000).then(function(res){
+    SYNC_PULL_BUSY=false;
+    if(!res||res.ok===false){ updateSyncMeta('تعذر الاتصال'); if(cb)cb(false); return; }
+    var db=localGetDB();
+    (res.events||[]).forEach(function(ev){applyEventToLocalDB(db,ev);});
+    if(res.masterChanged){
+      if(res.sessions) db.sessions=mergeObjectsByTime(res.sessions,db.sessions||{});
+      if(res.banks) db.banks=mergeObjectsByTime(res.banks,db.banks||{});
+    }
+    if(res.seq!=null) syncSetSeq(res.seq);
+    if(res.masterVersion!=null) syncSetMVer(res.masterVersion);
+    DB_CACHE=db; localSetDB(db);
+    var changed=(res.events&&res.events.length)||res.masterChanged;
+    updateSyncMeta(changed?('محدث ('+(res.events?res.events.length:0)+' تحديث)'):'محدث');
+    if(changed){
+      if(currentCode&&document.getElementById('adm-panel')&&document.getElementById('adm-panel').style.display!=='none'){
+        var sess=db.sessions[currentCode],recs=(db.records&&db.records[currentCode])||[];
+        if(sess)renderAdmPanel(currentCode,sess,recs);
+      }
+      renderSessionHistory();
+    }
+    if(cb)cb(true);
+  }).catch(function(){ SYNC_PULL_BUSY=false; updateSyncMeta('تعذر الاتصال'); if(cb)cb(false); });
+}
+
+// Kept so every existing onclick="..." reference and internal call site keeps
+// working unchanged — only the implementation behind these names changed.
+backgroundPull=function(force,cb){ syncPullIncremental(force,cb); };
+forceCloudRefresh=function(cb){
+  syncPullIncremental(true,function(ok){
+    if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');
+    if(cb)cb(ok);
+  });
+};
+manualFullSync=function(cb,silent){
+  setStatus('مزامنة: رفع ثم جلب التحديثات','#C0A500');
+  flushOutbox(function(){
+    syncPullIncremental(true,function(ok){
+      updateSyncMeta(ok?'مكتمل':'غير مكتمل');
+      if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنجاح.','tok');
+      if(typeof cb==='function')cb(ok);
+    });
+  });
+};
+publishMasterSnapshot=function(showMsg,cb){
+  var db=normalizeDB(localGetDB());
+  if(!hasMasterData(db)){
+    if(showMsg)showToast('adm-toast','لا توجد جلسات أو بنوك أسئلة محلية لنشرها مركزياً. أنشئ بنك أسئلة/جلسة أولاً أو استورد البيانات.','ter');
+    if(cb)cb(false); return;
+  }
+  setStatus('جاري نشر الجلسات وبنوك الأسئلة إلى Google Sheet','#C0A500');
+  // Only sessions/banks are sent — never records — matching the server's
+  // merge-by-key handling, so this can never overwrite trainee data.
+  postCentralAsync({action:'publishMasterData',db:{sessions:db.sessions,banks:db.banks},client:CLIENT_ID,version:PROGRAM_VERSION,updatedAt:new Date().toISOString()},18000).then(function(res){
+    if(res&&res.ok){
+      if(showMsg)showToast('adm-toast','تمت تهيئة/تحديث البيانات المركزية.','tok');
+      syncPullIncremental(true,function(){ if(cb)cb(true); });
+    }else{
+      if(showMsg)showToast('adm-toast','تعذر تحديث البيانات المركزية.','ter');
+      if(cb)cb(false);
+    }
+  });
+};
+function syncHeartbeat(){ syncPullIncremental(false); }
+startBidirectionalSync=function(){
+  updateSyncMeta();
+  clearInterval(SYNC_HEARTBEAT_TIMER);
+  // A single slow heartbeat, only while visible+online (checked inside
+  // syncPullIncremental) — replaces the old 5s/25s/60s full-refresh timers.
+  SYNC_HEARTBEAT_TIMER=setInterval(syncHeartbeat,SYNC_HEARTBEAT_MS);
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible')syncPullIncremental(true);
+  });
+};
 function startAppV57(){
   try{var _t=localStorage.getItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');if(_t)JSON.parse(_t);}catch(e){localStorage.removeItem(STORAGE_KEY||'mtcit_mbo_kpi_v1');}
   bootstrapFromCloud(function(ok){
@@ -3158,14 +3304,10 @@ trJoin=function(){
   }
   _trJoin_before_v57();
 };
-// زر تحديث السحابة في V5.7 يجلب Master Data أولاً ثم الأحداث/السجلات.
-var _forceCloudRefresh_before_v57=forceCloudRefresh;
-forceCloudRefresh=function(cb){
-  cloudGetMaster(function(remote){
-    if(remote&&hasMasterData(remote))setMasterFromCloud(remote,'manual-refresh');
-    _forceCloudRefresh_before_v57(cb);
-  });
-};
+// ملاحظة: تم دمج منطق "جلب Master Data ثم الأحداث" داخل محرك المزامنة الجديد
+// (syncPullIncremental يتحقق من masterChanged تلقائياً)، لذا لم تعد هذه الطبقة
+// الإضافية القديمة ضرورية وتمت إزالتها لتفادي جلب مزدوج غير ضروري لكل ضغطة زر.
+
 
 /* ===================== INIT ===================== */
 startAppV57();
