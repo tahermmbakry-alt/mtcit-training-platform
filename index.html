@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V5.7 - Master Snapshot + Event Queue Sync</title>
+<title>Workshops Evaluation V5.9 - Master Snapshot + Event Queue Sync</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -184,6 +184,48 @@ tr:hover td{background:#F8FAFD}
 .import-panel{background:#F8FAFD;border:1px dashed #B5D4F4;border-radius:12px;padding:12px;margin-top:12px}
 @media(max-width:600px){.r2{grid-template-columns:1fr}.krow5{grid-template-columns:1fr 1fr}.content{padding:12px}.sec-grid{grid-template-columns:1fr}}
 
+/* ===== Reports page (v5.9) ===== */
+.rpt-header{text-align:center;margin-bottom:18px;padding-bottom:12px;border-bottom:3px solid #003087}
+.rpt-header-title{font-size:20px;font-weight:900;color:#003087}
+.rpt-header-sub{font-size:12px;color:#555;margin-top:4px}
+.rpt-header-date{font-size:11px;color:#888;margin-top:2px}
+.rpt-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.rpt-kpi{background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:12px;text-align:center}
+.rpt-kpi-val{font-size:22px;font-weight:900}
+.rpt-kpi-label{font-size:11px;color:#333;margin-top:4px}
+.rpt-section-title{font-size:14px;font-weight:800;color:#003087;margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid #E0E8F0}
+.rpt-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.rpt-bar-track{flex:1;height:10px;background:#E0E8F0;border-radius:99px;overflow:hidden}
+.rpt-bar-fill{height:100%;border-radius:99px}
+.rpt-bar-note{font-size:11px;font-weight:700;min-width:50px;text-align:left}
+.rpt-callouts{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.rpt-callout{flex:1;min-width:220px;border-radius:10px;padding:12px;font-size:12px}
+.rpt-callout.g{background:#EAF5EE;border:1px solid #A8D8B8}
+.rpt-callout.y{background:#FFFBEA;border:1px solid #F0D060}
+.rpt-session-info{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:12px;background:#F8FAFD;border:1px solid #E0E8F0;border-radius:10px;padding:12px;margin-bottom:16px}
+.rpt-table{width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed}
+.rpt-table th,.rpt-table td{border:1px solid #E0E8F0;padding:6px 8px;font-size:12px;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:break-word}
+.rpt-table th{background:#F0F4FA;color:#003087}
+.rpt-list{margin:0;padding-right:18px;font-size:12px;overflow-wrap:break-word}
+.rpt-list li{margin-bottom:6px}
+.rpt-bar-label{font-size:12px;min-width:160px;white-space:normal;overflow-wrap:break-word}
+.rpt-donut-row{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.rpt-donut-wrap{text-align:center}
+.rpt-donut{border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.rpt-donut-hole{width:68%;height:68%;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.rpt-donut-pct{font-size:18px;font-weight:900}
+.rpt-donut-label{font-size:12px;color:#333;margin-top:6px;font-weight:700;max-width:140px}
+@media(max-width:600px){.rpt-kpis{grid-template-columns:1fr 1fr}.rpt-session-info{grid-template-columns:1fr}}
+@media print{
+  body *{visibility:hidden}
+  #rpt-preview,#rpt-preview *{visibility:visible}
+  #rpt-preview{position:absolute;top:0;right:0;left:0;width:100%;padding:0;margin:0}
+  .no-print{display:none!important}
+  /* Without this, browsers strip background colors/gradients when printing,
+     which would make every bar/donut/KPI chart in the report print blank. */
+  #rpt-preview,#rpt-preview *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+}
+
 
 /* Professional Notification Center */
 .notify-stack{position:fixed;top:88px;left:18px;z-index:900;display:flex;flex-direction:column;gap:10px;max-width:min(430px,calc(100vw - 36px));pointer-events:none}
@@ -205,7 +247,7 @@ tr:hover td{background:#F8FAFD}
 <div class="app">
 <div class="topbar">
   <div>
-    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.7</span></div>
+    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.9</span></div>
     <div class="ts">اختبار المتدرب قبل وبعد الدورة وتقييم الدورة</div>
   </div>
   <div class="rtog">
@@ -213,6 +255,7 @@ tr:hover td{background:#F8FAFD}
     <button class="rtb" id="rb-adm" onclick="setRole('adm')"><i class="ti ti-shield"></i> مشرف</button>
     <button class="rtb"    id="rb-qb"  onclick="setRole('qb')"><i class="ti ti-list-check"></i> الأسئلة</button>
     <button class="rtb" id="rb-sec" onclick="setRole('sec')"><i class="ti ti-lock-cog"></i> الأمان</button>
+    <button class="rtb" id="rb-rpt" onclick="setRole('rpt')"><i class="ti ti-report"></i> تقارير</button>
     <button class="rtb on"    id="rb-tr"  onclick="setRole('tr')"><i class="ti ti-user"></i> متدرب</button>
   </div>
 </div>
@@ -237,7 +280,7 @@ tr:hover td{background:#F8FAFD}
 
 <div class="view" id="v-adm">
   <div id="adm-toast" class="toast"></div>
-  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.7 يتم تحميل الجلسات وبنوك الأسئلة تلقائياً من Google Sheet عند أول فتح للبرنامج، ثم تُرسل بيانات المتدربين كأحداث خفيفة لا تؤثر على سرعة الإدخال حتى مع عدد كبير من المستخدمين.</div>
+  <div class="card cgreen" style="font-size:12px;color:#155724;line-height:1.8"><strong><i class="ti ti-shield-check"></i> وضع الحفظ الآمن:</strong> يتم حفظ إدخال المتدرب فورياً على الجهاز أولاً، ثم تُرسل بياناته المركزية إلى Google Sheet كسجل حدث خفيف لكل مرحلة: تسجيل المتدرب، الاختبار القبلي، الاختبار البعدي، وتقييم الدورة والمدرب. في V5.9 يتم تحميل الجلسات وبنوك الأسئلة تلقائياً من Google Sheet عند أول فتح للبرنامج، ثم تُرسل بيانات المتدربين كأحداث خفيفة لا تؤثر على سرعة الإدخال حتى مع عدد كبير من المستخدمين.</div>
   <div class="sec"><div class="sec-l"><i class="ti ti-plus-circle"></i> إنشاء جلسة جديدة</div></div>
   <div class="card">
     <div class="r2">
@@ -377,6 +420,33 @@ tr:hover td{background:#F8FAFD}
       <div><div class="lbl"><span class="req">*</span>تأكيد كلمة المرور الجديدة</div><div class="pass-wrap"><input type="password" id="sec-confirm-pass" placeholder="أعد إدخال كلمة المرور"><button class="eye-btn" onclick="togglePassField('sec-confirm-pass')" type="button"><i class="ti ti-eye"></i></button></div></div>
     </div>
     <button class="bp" onclick="changeAdminPassword()"><i class="ti ti-device-floppy"></i> حفظ كلمة المرور الجديدة</button>
+  </div>
+</div>
+
+<div class="view" id="v-rpt">
+  <div id="rpt-toast" class="toast"></div>
+  <div class="sec"><div class="sec-l"><i class="ti ti-report"></i> تقارير الجلسات والتقييمات</div></div>
+  <div class="card cblue no-print" style="font-size:12px;color:#155724;line-height:1.8">
+    <strong><i class="ti ti-info-circle"></i> ملاحظة:</strong> اختر جلسة محددة لعرض تقرير خاص بها، أو اترك الاختيار على "كل الجلسات" لعرض تقرير شامل بمؤشرات الأداء لجميع الجلسات المحفوظة. يمكن بعدها طباعة التقرير مباشرة (ثم اختيار "حفظ كـ PDF" من نافذة الطباعة) أو تنزيله بصيغة Word.
+  </div>
+  <div class="card no-print">
+    <div class="r2">
+      <div><div class="lbl">اختر الجلسة</div>
+        <select id="rpt-session-select"><option value="">— كل الجلسات —</option></select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="bp" style="width:100%" onclick="generateReport()"><i class="ti ti-report-analytics"></i> إنشاء التقرير</button>
+      </div>
+    </div>
+  </div>
+  <div id="rpt-actions" class="no-print" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="bs" onclick="printReport()"><i class="ti ti-printer"></i> طباعة / حفظ PDF</button>
+    <button class="bs" onclick="downloadReportAsDocx()"><i class="ti ti-file-type-doc"></i> تنزيل Word (.doc)</button>
+  </div>
+  <div class="card" id="rpt-preview-wrap">
+    <div id="rpt-preview" style="padding:6px">
+      <div style="text-align:center;padding:30px;color:#888;font-size:13px"><i class="ti ti-report-search" style="font-size:30px;display:block;margin-bottom:8px"></i>اختر جلسة (أو كل الجلسات) ثم اضغط "إنشاء التقرير".</div>
+    </div>
   </div>
 </div>
 
@@ -903,6 +973,35 @@ function traineeKeySafe(rec){
   rec=rec||{};
   return String(rec.eid||rec.employeeId||rec.id||rec.name||'unknown').trim().toLowerCase().replace(/\s+/g,'_');
 }
+
+/* ===== Master data (bank/session) deletion tombstones =====
+   Same problem as record tombstones, one level up: sessions/banks are merged
+   by key (newer wins) so a stale snapshot can't accidentally erase what
+   another browser created — but that also means deleting a bank/session
+   locally does nothing durable on its own: the next sync just merges the
+   still-existing server copy back in, and republishing (e.g. via the 2.5s
+   auto-publish after any edit) can even reintroduce it repeatedly, which is
+   what looked like banks "coming back and duplicating." Tombstones fix this
+   the same way as for records, one level up (bank/session ids instead of
+   trainee keys), and are sent to the server on every publish so it can
+   permanently exclude them from the merged sheets. */
+var MASTER_TOMBSTONE_KEY = STORAGE_KEY + '_master_tombstones';
+function getMasterTombstonesLocal(){ return safeParseJSON(localStorage.getItem(MASTER_TOMBSTONE_KEY)||'{"banks":{},"sessions":{}}',{banks:{},sessions:{}}); }
+function setMasterTombstonesLocal(t){ try{localStorage.setItem(MASTER_TOMBSTONE_KEY,JSON.stringify(t||{banks:{},sessions:{}}));}catch(e){console.warn(e);} }
+function markBankDeleted(id){ var t=getMasterTombstonesLocal(); t.banks=t.banks||{}; t.banks[id]=Date.now(); setMasterTombstonesLocal(t); }
+function markSessionDeleted(code){ var t=getMasterTombstonesLocal(); t.sessions=t.sessions||{}; t.sessions[String(code||'').toUpperCase()]=Date.now(); setMasterTombstonesLocal(t); }
+function isBankDeletedLocally(id){ var t=getMasterTombstonesLocal(); return !!(t.banks&&t.banks[id]); }
+function isSessionDeletedLocally(code){ var t=getMasterTombstonesLocal(); return !!(t.sessions&&t.sessions[String(code||'').toUpperCase()]); }
+function stripTombstonedMaster(obj){
+  // Filters an incoming {sessions,banks} pair (from bootstrap or incremental
+  // pull) against our locally-known deletions, so a copy that's still in
+  // flight to the server can't flash back into view in the meantime.
+  var t=getMasterTombstonesLocal();
+  if(obj && obj.sessions) Object.keys(t.sessions||{}).forEach(function(code){ delete obj.sessions[code]; });
+  if(obj && obj.banks) Object.keys(t.banks||{}).forEach(function(id){ delete obj.banks[id]; });
+  return obj;
+}
+
 function postCentralAsync(payload,timeoutMs){
   timeoutMs=timeoutMs||9000;
   return new Promise(function(resolve){
@@ -1156,19 +1255,19 @@ function stars(v,max){max=max||5;var s='';for(var i=1;i<=max;i++)s+='<span style
 function show(id,d){var e=document.getElementById(id);if(e)e.style.display=d||'block';}
 function hide(id){var e=document.getElementById(id);if(e)e.style.display='none';}
 function setRole(r){
-  if((r==='stats'||r==='adm'||r==='qb'||r==='sec')&&!adminUnlocked){showAdminLogin(r);return;}
+  if((r==='stats'||r==='adm'||r==='qb'||r==='sec'||r==='rpt')&&!adminUnlocked){showAdminLogin(r);return;}
   activateRole(r);
 }
 function activateRole(r){
   document.body.classList.toggle('trainee-mode',r==='tr');
-  ['stats','adm','qb','sec','tr'].forEach(function(x){
+  ['stats','adm','qb','sec','rpt','tr'].forEach(function(x){
     var v=document.getElementById('v-'+x),b=document.getElementById('rb-'+x);
     if(v)v.classList.toggle('on',x===r);
     if(b)b.classList.toggle('on',x===r);
   });
   // The full-sync / cloud-refresh / master-init buttons are admin tools that would
   // only confuse a trainee logging in to take a test — show them only in admin views.
-  var isAdminView = (r==='stats'||r==='adm'||r==='qb'||r==='sec');
+  var isAdminView = (r==='stats'||r==='adm'||r==='qb'||r==='sec'||r==='rpt');
   ['btn-manual-full-sync','btn-force-cloud-refresh','btn-publish-master'].forEach(function(id){
     var el=document.getElementById(id);
     if(el)el.style.display = isAdminView ? '' : 'none';
@@ -1176,6 +1275,7 @@ function activateRole(r){
   if(r==='stats')renderStatsDashboard();
   if(r==='qb')renderBanksList();
   if(r==='adm'){populateBankSelect();renderSessionHistory();}
+  if(r==='rpt')populateReportSessionSelect();
 }
 async function sha256Text(txt){
   if(window.crypto&&crypto.subtle){
@@ -1463,7 +1563,9 @@ function deleteBank(id){
   }
   if(!confirm(msg))return;
   delete db.banks[id];
+  markBankDeleted(id);
   setDB(db);
+  publishMasterSnapshot(false);
   populateBankSelect();
   renderBanksList();
   showToast('qb-toast','تم حذف بنك الأسئلة بنجاح.','tok');
@@ -1789,7 +1891,9 @@ function deleteSessionByCode(code){
   if(!confirm(msg))return;
   delete db.sessions[code];
   if(db.records)delete db.records[code];
+  markSessionDeleted(code);
   setDB(db);
+  publishMasterSnapshot(false);
   if(currentCode===code){
     currentCode=null;
     var p=document.getElementById('adm-panel'); if(p)p.style.display='none';
@@ -1920,6 +2024,263 @@ function renderStatsDashboard(){
     +'</div></div></div>'
     +'<div class="sec" style="margin-top:16px"><div class="sec-l"><i class="ti ti-table"></i> مقارنة الجلسات السابقة</div></div>'
     +'<div class="tw"><table><thead><tr><th>الرمز</th><th>الدورة</th><th>المدرب</th><th>مسجلون</th><th>إكمال بعد</th><th>الفجوة</th><th>الدورة</th><th>المدرب</th><th>فتح</th></tr></thead><tbody>'+table+'</tbody></table></div>';
+}
+
+/* ===================== V5.9 REPORTS PAGE =====================
+   Builds a print/export-ready report (all sessions, or one selected session)
+   reusing the same analytics helpers as the stats dashboard/admin panel, so
+   the numbers are always consistent across the app. Export is done via the
+   browser's native print dialog (choose "Save as PDF") for PDF, and via an
+   HTML-packaged .doc file (opens natively in Word/LibreOffice/Google Docs)
+   for Word — both work with zero extra libraries and preserve Arabic RTL
+   layout correctly. */
+function populateReportSessionSelect(){
+  var sel=document.getElementById('rpt-session-select'); if(!sel)return;
+  var rows=sessionRowsAnalytics();
+  var cur=sel.value;
+  sel.innerHTML='<option value="">— كل الجلسات —</option>'+rows.map(function(r){
+    return '<option value="'+safeHtml(r.code)+'">'+safeHtml(r.code)+' — '+safeHtml(r.batch)+'</option>';
+  }).join('');
+  if(cur && rows.some(function(r){return r.code===cur;})) sel.value=cur;
+}
+function reportKpi(label,value,color){
+  return '<div class="rpt-kpi"><div class="rpt-kpi-val" style="color:'+color+'">'+value+'</div><div class="rpt-kpi-label">'+safeHtml(label)+'</div></div>';
+}
+function reportBarChart(items){
+  return '<div class="rpt-chart">'+items.map(function(it){
+    var v=Math.max(0,Math.min(100,Number(it.value)||0));
+    return '<div class="rpt-bar-row"><span class="rpt-bar-label">'+safeHtml(it.label)+'</span>'
+      +'<div class="rpt-bar-track"><div class="rpt-bar-fill" style="width:'+v+'%;background:'+(it.color||'#003087')+'"></div></div>'
+      +'<span class="rpt-bar-note">'+(it.note!=null?safeHtml(it.note):v+'%')+'</span></div>';
+  }).join('')+'</div>';
+}
+function reportDonut(percent,color,label){
+  percent=Math.max(0,Math.min(100,Number(percent)||0));
+  var deg=percent*3.6;
+  return '<div class="rpt-donut-wrap">'
+    +'<div class="rpt-donut" style="width:110px;height:110px;background:conic-gradient('+color+' '+deg+'deg,#E8EDF5 0deg)">'
+    +'<div class="rpt-donut-hole"><div class="rpt-donut-pct" style="color:'+color+'">'+percent+'%</div></div>'
+    +'</div><div class="rpt-donut-label">'+safeHtml(label)+'</div></div>';
+}
+function reportDonutRow(items){
+  return '<div class="rpt-donut-row">'+items.map(function(it){return reportDonut(it.percent,it.color,it.label);}).join('')+'</div>';
+}
+function reportHeader(title){
+  var now=new Date();
+  var dateStr=now.toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
+  return '<div class="rpt-header">'
+    +'<div class="rpt-header-title"><i class="ti ti-report"></i> '+safeHtml(title)+'</div>'
+    +'<div class="rpt-header-sub">الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات</div>'
+    +'<div class="rpt-header-date">تاريخ التقرير: '+dateStr+'</div>'
+    +'</div>';
+}
+function buildAllSessionsReportHtml(){
+  var rows=sessionRowsAnalytics();
+  if(!rows.length){
+    return reportHeader('تقرير شامل لكل الجلسات والتقييمات')+'<div style="text-align:center;padding:30px;color:#888">لا توجد جلسات محفوظة بعد.</div>';
+  }
+  var totalSessions=rows.length, totalRegs=rows.reduce(function(s,r){return s+r.total;},0), totalPre=rows.reduce(function(s,r){return s+r.pre;},0), totalPost=rows.reduce(function(s,r){return s+r.post;},0), totalEval=rows.reduce(function(s,r){return s+r.evalCount;},0);
+  var allGaps=[]; rows.forEach(function(r){r.records.forEach(function(x){if(x.gap!=null)allGaps.push(Number(x.gap)||0);});});
+  var allCourse=[], allTrainer=[];
+  rows.forEach(function(r){r.records.forEach(function(rec){
+    var e=normalizeEvalRecord(rec); if(!e)return;
+    var c=evalNum(e,'course_overall'); if(c)allCourse.push(c);
+    var a=[evalNum(e,'trainer_knowledge'),evalNum(e,'trainer_delivery'),evalNum(e,'trainer_interaction')].filter(function(x){return x!=null&&x>0;});
+    if(a.length)allTrainer.push(avg(a));
+  });});
+  var avgGap=allGaps.length?avg(allGaps):0, avgCourse=avg(allCourse), avgTrainer=avg(allTrainer);
+  var completedRate=pct(totalPost,totalRegs), evalRate=pct(totalEval,totalRegs), preRate=pct(totalPre,totalRegs);
+  var withScore=rows.filter(function(r){return r.avgCourse>0;});
+  var best=withScore.slice().sort(function(a,b){return b.avgCourse-a.avgCourse;})[0];
+  var weakest=withScore.slice().sort(function(a,b){return a.avgCourse-b.avgCourse;})[0];
+
+  // Average pre/post test SCORES (not just completion rates) — a key figure
+  // for decision-makers judging actual learning impact, not just participation.
+  var preScores=[], postScores=[];
+  rows.forEach(function(r){ r.records.forEach(function(x){
+    if(x.pre&&x.pre.total!=null) preScores.push(Number(x.pre.total)||0);
+    if(x.post&&x.post.total!=null) postScores.push(Number(x.post.total)||0);
+  });});
+  var avgPreScore=preScores.length?avg(preScores):0, avgPostScore=postScores.length?avg(postScores):0;
+
+  var kpis='<div class="rpt-kpis">'
+    +reportKpi('إجمالي الجلسات',totalSessions,'#003087')
+    +reportKpi('إجمالي المتدربين',totalRegs,'#0F6E56')
+    +reportKpi('إكمال اختبار قبل',preRate+'%','#534AB7')
+    +reportKpi('إكمال اختبار بعد',completedRate+'%','#1D9E75')
+    +reportKpi('إكمال التقييم',evalRate+'%','#C0A500')
+    +'</div>';
+
+  var donuts=reportDonutRow([
+    {percent:preRate,color:'#534AB7',label:'إكمال اختبار قبل الدورة'},
+    {percent:completedRate,color:'#1D9E75',label:'إكمال اختبار بعد الدورة'},
+    {percent:evalRate,color:'#C0A500',label:'إكمال تقييم الدورة'}
+  ]);
+
+  var scoreChart=reportBarChart([
+    {label:'متوسط الدرجة قبل الدورة',value:avgPreScore,note:fmt1(avgPreScore)+'%',color:'#534AB7'},
+    {label:'متوسط الدرجة بعد الدورة',value:avgPostScore,note:fmt1(avgPostScore)+'%',color:'#1D9E75'}
+  ]);
+
+  var chart=reportBarChart([
+    {label:'متوسط تقييم الدورة',value:avgCourse/5*100,note:fmt1(avgCourse)+'/5',color:'#003087'},
+    {label:'متوسط تقييم المدرب',value:avgTrainer/5*100,note:fmt1(avgTrainer)+'/5',color:'#0F6E56'},
+    {label:'أثر التعلم (متوسط الفجوة)',value:Math.max(0,Math.min(100,50+avgGap)),note:(avgGap>=0?'+':'')+fmt1(avgGap)+' نقطة',color:'#1D9E75'}
+  ]);
+
+  var sessionsChart=reportBarChart(rows.slice(0,12).map(function(r){
+    return {label:r.code+' — '+r.batch,value:r.avgCourse?r.avgCourse/5*100:0,note:r.avgCourse?fmt1(r.avgCourse)+'/5':'—',color:'#003087'};
+  }));
+
+  var table=rows.map(function(r){
+    return '<tr><td>'+safeHtml(r.code)+'</td><td>'+safeHtml(r.batch)+'</td><td>'+safeHtml(r.trainer)+'</td><td>'+r.total+'</td><td>'+pct(r.post,r.total)+'%</td><td>'+(r.avgCourse?fmt1(r.avgCourse)+'/5':'—')+'</td></tr>';
+  }).join('');
+
+  return reportHeader('تقرير شامل لكل الجلسات والتقييمات')
+    +kpis
+    +'<div class="rpt-section-title">نسب الإكمال</div>'+donuts
+    +'<div class="rpt-section-title">متوسط الدرجات: قبل مقابل بعد الدورة</div>'+scoreChart
+    +'<div class="rpt-section-title">مؤشرات الجودة والأثر</div>'+chart
+    +'<div class="rpt-section-title">أبرز القراءات التنفيذية</div>'
+    +'<div class="rpt-callouts">'
+    +'<div class="rpt-callout g"><b>أفضل دورة تقييماً:</b><br>'+safeHtml(best?best.batch:'—')+' ('+(best?fmt1(best.avgCourse)+'/5':'—')+')</div>'
+    +'<div class="rpt-callout y"><b>دورة تحتاج تحسين:</b><br>'+safeHtml(weakest?weakest.batch:'—')+' ('+(weakest?fmt1(weakest.avgCourse)+'/5':'—')+')</div>'
+    +'</div>'
+    +'<div class="rpt-section-title">مقارنة تقييم الجلسات (أحدث '+Math.min(12,rows.length)+' جلسة)</div>'+sessionsChart
+    +'<div class="rpt-section-title">جدول تفصيلي بكل الجلسات ('+rows.length+')</div>'
+    +'<table class="rpt-table"><thead><tr><th>الرمز</th><th>الدورة</th><th>المدرب</th><th>مسجلون</th><th>إكمال بعد</th><th>تقييم الدورة</th></tr></thead><tbody>'+table+'</tbody></table>';
+}
+function buildSingleSessionReportHtml(code){
+  var db=getDB();
+  var sess=db.sessions&&db.sessions[code];
+  if(!sess){ return reportHeader('تقرير الجلسة')+'<div style="text-align:center;padding:30px;color:#888">الجلسة غير موجودة.</div>'; }
+  var recs=(db.records&&db.records[code])||[];
+  var evals=recs.map(function(r){return normalizeEvalRecord(r);}).filter(function(e){return e;});
+  var gaps=recs.filter(function(r){return r.gap!=null;}).map(function(r){return Number(r.gap)||0;});
+  var avgGap=gaps.length?avg(gaps):null;
+
+  var kpis='<div class="rpt-kpis">'
+    +reportKpi('إجمالي المتدربين',recs.length,'#003087')
+    +reportKpi('اختبار قبل',recs.filter(function(r){return r.pre;}).length,'#534AB7')
+    +reportKpi('اختبار بعد',recs.filter(function(r){return r.post;}).length,'#1D9E75')
+    +reportKpi('التقييمات',evals.length,'#C0A500')
+    +reportKpi('متوسط الفجوة',avgGap!=null?((avgGap>=0?'+':'')+fmt1(avgGap)):'—','#0F6E56')
+    +'</div>';
+
+  var preScores=recs.filter(function(r){return r.pre&&r.pre.total!=null;}).map(function(r){return Number(r.pre.total)||0;});
+  var postScores=recs.filter(function(r){return r.post&&r.post.total!=null;}).map(function(r){return Number(r.post.total)||0;});
+  var avgPreScore=preScores.length?avg(preScores):0, avgPostScore=postScores.length?avg(postScores):0;
+  var scoreChart=reportBarChart([
+    {label:'متوسط الدرجة قبل الدورة',value:avgPreScore,note:fmt1(avgPreScore)+'%',color:'#534AB7'},
+    {label:'متوسط الدرجة بعد الدورة',value:avgPostScore,note:fmt1(avgPostScore)+'%',color:'#1D9E75'}
+  ]);
+  var donuts=reportDonutRow([
+    {percent:pct(recs.filter(function(r){return r.pre;}).length,recs.length),color:'#534AB7',label:'إكمال اختبار قبل الدورة'},
+    {percent:pct(recs.filter(function(r){return r.post;}).length,recs.length),color:'#1D9E75',label:'إكمال اختبار بعد الدورة'},
+    {percent:pct(evals.length,recs.length),color:'#C0A500',label:'إكمال تقييم الدورة'}
+  ]);
+
+  var ac=avg(evals.map(function(e){return evalNum(e,'course_overall');}));
+  var atk=avg(evals.map(function(e){return evalNum(e,'trainer_knowledge');}));
+  var atd=avg(evals.map(function(e){return evalNum(e,'trainer_delivery');}));
+  var ati=avg(evals.map(function(e){return evalNum(e,'trainer_interaction');}));
+  var acon=avg(evals.map(function(e){return evalNum(e,'content_quality');}));
+  var ape=avg(evals.map(function(e){return evalNum(e,'practical_exercises');}));
+  var arl=avg(evals.map(function(e){return evalNum(e,'relevance_to_work');}));
+  var atm=avg(evals.map(function(e){return evalNum(e,'time_management');}));
+  var rec_yes=evals.filter(function(e){return evalVal(e,'recommend')==='yes';}).length;
+
+  var chart=reportBarChart([
+    {label:'تقييم الدورة عموماً',value:ac/5*100,note:fmt1(ac)+'/5',color:'#003087'},
+    {label:'معرفة المدرب',value:atk/5*100,note:fmt1(atk)+'/5',color:'#0F6E56'},
+    {label:'أسلوب تقديم المدرب',value:atd/5*100,note:fmt1(atd)+'/5',color:'#0F6E56'},
+    {label:'تفاعل المدرب',value:ati/5*100,note:fmt1(ati)+'/5',color:'#0F6E56'},
+    {label:'جودة المحتوى',value:acon/5*100,note:fmt1(acon)+'/5',color:'#534AB7'},
+    {label:'التطبيق العملي',value:ape/5*100,note:fmt1(ape)+'/5',color:'#A32D2D'},
+    {label:'الصلة بالعمل',value:arl/5*100,note:fmt1(arl)+'/5',color:'#1D9E75'},
+    {label:'إدارة الوقت',value:atm/5*100,note:fmt1(atm)+'/5',color:'#888'}
+  ]);
+
+  var bests=evals.filter(function(e){var v=evalText(e,'best_part');return v&&v.trim();}).map(function(e){return evalText(e,'best_part').trim();});
+  var improvements=evals.filter(function(e){var v=evalText(e,'improvement');return v&&v.trim();}).map(function(e){return evalText(e,'improvement').trim();});
+
+  var recTable=recs.map(function(r){
+    var e=normalizeEvalRecord(r);
+    var c=e?evalNum(e,'course_overall'):null;
+    var preTxt=(r.pre&&r.pre.total!=null)?r.pre.total+'%':'—';
+    var postTxt=(r.post&&r.post.total!=null)?r.post.total+'%':'—';
+    return '<tr><td>'+safeHtml(r.name||'—')+'</td><td>'+safeHtml(r.eid||'—')+'</td><td>'+safeHtml(r.dept||'—')+'</td><td>'+preTxt+'</td><td>'+postTxt+'</td><td>'+(r.gap!=null?((r.gap>=0?'+':'')+r.gap):'—')+'</td><td>'+(c?fmt1(c)+'/5':'—')+'</td></tr>';
+  }).join('');
+
+  return reportHeader('تقرير الجلسة: '+(sess.batch||code))
+    +'<div class="rpt-session-info">'
+    +'<div><b>رمز الجلسة:</b> '+safeHtml(code)+'</div>'
+    +'<div><b>المدرب:</b> '+safeHtml(sess.trainer||'—')+'</div>'
+    +'<div><b>تاريخ البدء:</b> '+safeHtml(sess.start||'—')+'</div>'
+    +'<div><b>الموعد النهائي:</b> '+safeHtml(sess.deadline||'—')+'</div>'
+    +'<div><b>بنك الأسئلة:</b> '+safeHtml(sess.bankName||'—')+'</div>'
+    +'</div>'
+    +kpis
+    +'<div class="rpt-section-title">نسب الإكمال</div>'+donuts
+    +'<div class="rpt-section-title">متوسط الدرجات: قبل مقابل بعد الدورة</div>'+scoreChart
+    +'<div class="rpt-section-title">تفاصيل تقييم الدورة والمدرب</div>'+chart
+    +'<div class="rpt-section-title">التوصية بالدورة</div>'
+    +'<div class="rpt-callouts"><div class="rpt-callout g"><b>'+rec_yes+' من '+evals.length+'</b> يوصون بالدورة ('+(evals.length?pct(rec_yes,evals.length):0)+'%)</div></div>'
+    +(bests.length?'<div class="rpt-section-title">أفضل جوانب الدورة (عينة)</div><ul class="rpt-list">'+bests.slice(0,6).map(function(t){return '<li>'+safeHtml(t)+'</li>';}).join('')+'</ul>':'')
+    +(improvements.length?'<div class="rpt-section-title">مقترحات التحسين (عينة)</div><ul class="rpt-list">'+improvements.slice(0,6).map(function(t){return '<li>'+safeHtml(t)+'</li>';}).join('')+'</ul>':'')
+    +'<div class="rpt-section-title">جدول المتدربين ('+recs.length+')</div>'
+    +'<table class="rpt-table"><thead><tr><th>الاسم</th><th>الرقم الوظيفي</th><th>الإدارة</th><th>قبل</th><th>بعد</th><th>الفجوة</th><th>تقييم الدورة</th></tr></thead><tbody>'+recTable+'</tbody></table>';
+}
+function generateReport(){
+  var sel=document.getElementById('rpt-session-select');
+  var code=sel?sel.value:'';
+  var wrap=document.getElementById('rpt-preview'); if(!wrap)return;
+  wrap.innerHTML = code ? buildSingleSessionReportHtml(code) : buildAllSessionsReportHtml();
+  var actions=document.getElementById('rpt-actions'); if(actions)actions.style.display='flex';
+  showToast('rpt-toast','تم إنشاء التقرير.','tok');
+}
+function printReport(){
+  var wrap=document.getElementById('rpt-preview');
+  if(!wrap||!wrap.innerHTML.trim()){showToast('rpt-toast','أنشئ التقرير أولاً.','ter');return;}
+  window.print();
+}
+function downloadReportAsDocx(){
+  var el=document.getElementById('rpt-preview');
+  if(!el||!el.innerHTML.trim()){showToast('rpt-toast','أنشئ التقرير أولاً.','ter');return;}
+  // Packages the report as an HTML file with Word-specific markers — this is
+  // the standard zero-dependency technique for a "Word export" button in a
+  // client-only app; it opens natively in Word, LibreOffice, and Google Docs.
+  var styles='body{font-family:Calibri,Arial,sans-serif;direction:rtl;text-align:right}'
+    +'table{border-collapse:collapse;width:100%;margin:10px 0}'
+    +'td,th{border:1px solid #ccc;padding:6px;font-size:12px;text-align:right}'
+    +'th{background:#F0F4FA}'
+    +'.rpt-header{text-align:center;border-bottom:3px solid #003087;padding-bottom:10px;margin-bottom:14px}'
+    +'.rpt-header-title{font-size:20px;font-weight:bold;color:#003087}'
+    +'.rpt-header-sub,.rpt-header-date{font-size:11px;color:#555}'
+    +'.rpt-section-title{font-size:14px;font-weight:bold;color:#003087;margin:14px 0 6px;border-bottom:2px solid #E0E8F0;padding-bottom:4px}'
+    +'.rpt-kpi{display:inline-block;width:18%;text-align:center;margin:4px 1%;vertical-align:top}'
+    +'.rpt-kpi-val{font-size:20px;font-weight:bold;color:#003087}.rpt-kpi-label{font-size:11px;color:#333}'
+    +'.rpt-callout{border:1px solid #ccc;border-radius:6px;padding:8px;margin:6px 4px 6px 0;display:inline-block;width:45%;vertical-align:top}'
+    +'.rpt-bar-row{margin:4px 0}.rpt-bar-label{font-size:11px}.rpt-bar-note{font-size:11px;font-weight:bold}'
+    +'.rpt-list li{font-size:12px;margin:4px 0}'
+    +'.rpt-donut-row{text-align:center}.rpt-donut-wrap{display:inline-block;width:30%;margin:6px 1%;text-align:center;vertical-align:top}'
+    +'.rpt-donut{background:#fff!important;border:8px solid #003087;border-radius:50%;margin:0 auto}'
+    +'.rpt-donut-hole{background:transparent!important}.rpt-donut-pct{font-size:16px;font-weight:bold;color:#003087!important}'
+    +'.rpt-donut-label{font-size:11px;margin-top:4px}';
+  var htmlDoc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+    +'<head><meta charset="utf-8"><title>تقرير</title>'
+    +'<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->'
+    +'<style>'+styles+'</style></head>'
+    +'<body dir="rtl">'+el.innerHTML+'</body></html>';
+  var blob=new Blob(['\ufeff',htmlDoc],{type:'application/msword'});
+  var url=URL.createObjectURL(blob);
+  var sel=document.getElementById('rpt-session-select');
+  var suffix=(sel&&sel.value)?sel.value:'كل_الجلسات';
+  var a=document.createElement('a');
+  a.href=url; a.download='تقرير_'+suffix+'_'+new Date().toISOString().slice(0,10)+'.doc';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('rpt-toast','تم تنزيل التقرير بصيغة Word — يفتح مباشرة في Word أو LibreOffice.','tok');
 }
 
 function renderAdmPanel(code,sess,recs){
@@ -2428,12 +2789,12 @@ function importEvaluationFile(){
 
 
 
-/* ===================== V5.7 CANONICAL CLOUD SYNC PATCH =====================
+/* ===================== V5.9 CANONICAL CLOUD SYNC PATCH =====================
    يعالج اختلاف البيانات بين المتصفحات والنسخة المحلية ونسخة GitHub.
    السبب الشائع: كل متصفح يملك localStorage مستقل. لذلك أصبحت Google Sheet
    هي المصدر الموحد، وكل مزامنة كاملة تنفذ: تنزيل السحابة -> دمج المحلي -> رفع الدمج -> تحقق.
 =================================================================== */
-var PROGRAM_VERSION = 'V5.7';
+var PROGRAM_VERSION = 'V5.9';
 var CLOUD_SCHEMA_VERSION = 'workshops-evaluation-cloud-db-v2';
 function parseMaybeJSON(v){
   if(!v)return null;
@@ -2564,7 +2925,7 @@ function backgroundPull(force,cb){
   });
 }
 function manualFullSync(cb,silent){
-  setStatus('مزامنة V5.7: Master Snapshot + أحداث خفيفة','#C0A500');
+  setStatus('مزامنة V5.9: Master Snapshot + أحداث خفيفة','#C0A500');
   if(!silent)showToast('adm-toast','جاري توحيد البيانات بين المتصفحات وGoogle Sheet...','tin');
   markAllLocalForCloud();
   flushOutbox(function(ok){
@@ -2581,7 +2942,7 @@ function forceCloudRefresh(cb){
   });
 }
 function startBidirectionalSync(){
-  updateSyncMeta('V5.7');
+  updateSyncMeta('V5.9');
   setTimeout(function(){manualFullSync(null,true);},900);
   setInterval(function(){manualFullSync(null,true);},25000);
   window.addEventListener('storage',function(e){
@@ -2590,13 +2951,13 @@ function startBidirectionalSync(){
 }
 
 
-/* ===================== V5.7 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
+/* ===================== V5.9 HIGH-CONCURRENCY EVENT QUEUE SYNC =====================
    الهدف: لا يتم رفع قاعدة البيانات كاملة أثناء إدخال المتدربين.
    كل متدرب يحفظ محلياً فوراً ثم يُرسل حدث صغير إلى Google Sheet:
    REGISTER_TRAINEE / PRE_SUBMIT / POST_SUBMIT / COURSE_EVALUATION / DELETE_RECORD
    يتعامل Google Apps Script مع هذه الأحداث كسجل مركزي ويعيد بناء Records عند الحاجة.
 =================================================================== */
-PROGRAM_VERSION='V5.7';
+PROGRAM_VERSION='V5.9';
 var EVENT_QUEUE_KEY = STORAGE_KEY + '_event_queue_v56';
 var EVENT_SENT_KEY = STORAGE_KEY + '_event_sent_signatures_v56';
 var EVENT_FLUSH_BUSY=false;
@@ -2785,11 +3146,11 @@ backgroundPull=function(force,cb){
 };
 manualFullSync=function(cb,silent){
   if(!silent)showToast('adm-toast','جاري رفع أحداث المتدربين ثم دمج إعدادات المشرف...','tin');
-  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.7 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
+  flushOutbox(function(ok){updateSyncMeta(ok?'مكتمل':'مؤجل'); if(ok&&!silent)showToast('adm-toast','تمت المزامنة بنظام V5.9 Event Queue.','tok'); if(typeof cb==='function')cb(ok);});
 };
 forceCloudRefresh=function(cb){backgroundPull(true,function(ok){if(ok)showToast('adm-toast','تم تحديث البيانات من Google Sheet.','tok');else showToast('adm-toast','تعذر التحديث من Google Sheet.','ter'); if(typeof cb==='function')cb(ok);});};
 startBidirectionalSync=function(){
-  updateSyncMeta('V5.7 Event Queue');
+  updateSyncMeta('V5.9 Event Queue');
   setTimeout(function(){flushEventQueue();backgroundPull(false);},900);
   setInterval(function(){flushEventQueue();},5000);
   setInterval(function(){backgroundPull(false);},60000);
@@ -2821,15 +3182,15 @@ deleteEvaluationRecord=function(key){
 
 
 
-/* ===================== V5.7 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
+/* ===================== V5.9 ROBUST GOOGLE SHEET DELIVERY PATCH =====================
    معالجة رسالة: "تعذر رفع الأحداث مباشرة".
    السبب غالباً CORS / Web App قديم / عدم استقبال payload من form-urlencoded.
-   V5.7 يستخدم 3 قنوات بالترتيب:
+   V5.9 يستخدم 3 قنوات بالترتيب:
    1) fetch JSON مباشر.
    2) form POST داخل iframe مخفي لتجاوز مشاكل CORS بدون تعطيل المتدرب.
    3) sendBeacon عند إغلاق الصفحة.
 =================================================================== */
-PROGRAM_VERSION='V5.7';
+PROGRAM_VERSION='V5.9';
 var EVENT_ARCHIVE_KEY = STORAGE_KEY + '_event_archive_v56';
 function archiveEventsV55(events,channel){
   try{
@@ -2921,14 +3282,14 @@ sendEventsBeacon=function(){
 };
 
 
-/* ===================== V5.7 TRAINEE CODE CHECK FIX =====================
+/* ===================== V5.9 TRAINEE CODE CHECK FIX =====================
    إصلاح الرسالة المتكررة عند المتدرب:
    - لا يوجد استدعاء تكراري trJoin -> forceRefreshThen -> trJoin.
    - التحقق المركزي يتم مرة واحدة فقط لكل ضغطة، مع قفل مؤقت لمنع التكرار.
    - رسالة "جاري التحقق" تظهر داخل شاشة المتدرب فقط ولا تظهر كإشعار عائم متكرر.
    - بعد الجلب من Google Sheet يتم إكمال الدخول إن وجد الرمز، أو إظهار خطأ واحد فقط.
 =================================================================== */
-PROGRAM_VERSION='V5.7';
+PROGRAM_VERSION='V5.9';
 var TRAINEE_CODE_CHECK_BUSY=false;
 var TRAINEE_LAST_CHECK={code:'',at:0};
 function setTraineeInlineMessage(msg,type){
@@ -3016,13 +3377,13 @@ showToast=function(id,m,t){
 };
 
 
-/* ===================== V5.7 MASTER DATA BOOTSTRAP PATCH =====================
+/* ===================== V5.9 MASTER DATA BOOTSTRAP PATCH =====================
    السبب الذي ظهر في Incognito/متصفح جديد: لا يوجد LocalStorage، والبرنامج لا يملك
-   جلسات أو بنوك أسئلة محلية. V5.7 يفصل بين:
+   جلسات أو بنوك أسئلة محلية. V5.9 يفصل بين:
    1) Master Snapshot: الجلسات + بنوك الأسئلة + الإعدادات، تُحمّل عند أول فتح.
    2) Event Queue: بيانات المتدربين والاختبارات والتقييم، تُرسل كأحداث خفيفة.
 =================================================================== */
-PROGRAM_VERSION='V5.7';
+PROGRAM_VERSION='V5.9';
 var MASTER_BOOTSTRAP_READY=false;
 var MASTER_BOOTSTRAP_BUSY=false;
 var MASTER_BOOTSTRAP_ERROR='';
@@ -3049,6 +3410,7 @@ function cloudGetMaster(cb){
 }
 function setMasterFromCloud(remote,source){
   if(!remote)return false;
+  remote=stripTombstonedMaster(normalizeDB(remote));
   var local=localGetDB();
   var merged=mergeDB(local,normalizeDB(remote));
   DB_CACHE=normalizeDB(merged);
@@ -3074,8 +3436,8 @@ function publishMasterSnapshot(showMsg,cb){
       updateSyncMeta('Master منشور');
       if(showMsg)showToast('adm-toast','تمت تهيئة Google Sheet مركزياً بالجلسات وبنوك الأسئلة. الآن ستظهر في المتصفح الجديد وIncognito.','tok');
     }else{
-      setStatus('تعذر نشر Master Snapshot — تحقق من Apps Script V5.7 والصلاحيات','#A32D2D');
-      if(showMsg)showToast('adm-toast','تعذر نشر البيانات الأساسية مركزياً. حدّث Google Apps Script إلى V5.7 ثم أعد النشر Web App.','ter');
+      setStatus('تعذر نشر Master Snapshot — تحقق من Apps Script V5.9 والصلاحيات','#A32D2D');
+      if(showMsg)showToast('adm-toast','تعذر نشر البيانات الأساسية مركزياً. حدّث Google Apps Script إلى V5.9 ثم أعد النشر Web App.','ter');
     }
     if(cb)cb(ok);
   });
@@ -3202,6 +3564,7 @@ function syncPullIncremental(force,cb){
     var db=localGetDB();
     (res.events||[]).forEach(function(ev){applyEventToLocalDB(db,ev);});
     if(res.masterChanged){
+      stripTombstonedMaster(res); // don't let a resurrected copy merge back in
       if(res.sessions) db.sessions=mergeObjectsByTime(res.sessions,db.sessions||{});
       if(res.banks) db.banks=mergeObjectsByTime(res.banks,db.banks||{});
     }
@@ -3247,9 +3610,16 @@ publishMasterSnapshot=function(showMsg,cb){
     if(cb)cb(false); return;
   }
   setStatus('جاري نشر الجلسات وبنوك الأسئلة إلى Google Sheet','#C0A500');
+  var t=getMasterTombstonesLocal();
   // Only sessions/banks are sent — never records — matching the server's
-  // merge-by-key handling, so this can never overwrite trainee data.
-  postCentralAsync({action:'publishMasterData',db:{sessions:db.sessions,banks:db.banks},client:CLIENT_ID,version:PROGRAM_VERSION,updatedAt:new Date().toISOString()},18000).then(function(res){
+  // merge-by-key handling. Known local deletions are re-sent every publish
+  // (cheap, idempotent) so a deletion that failed to reach the server once
+  // (offline, timeout) keeps getting retried until it sticks.
+  postCentralAsync({
+    action:'publishMasterData', db:{sessions:db.sessions,banks:db.banks},
+    deletedBankIds:Object.keys(t.banks||{}), deletedSessionCodes:Object.keys(t.sessions||{}),
+    client:CLIENT_ID,version:PROGRAM_VERSION,updatedAt:new Date().toISOString()
+  },18000).then(function(res){
     if(res&&res.ok){
       if(showMsg)showToast('adm-toast','تمت تهيئة/تحديث البيانات المركزية.','tok');
       syncPullIncremental(true,function(){ if(cb)cb(true); });
