@@ -3,9 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workshops Evaluation V5.9 - Master Snapshot + Event Queue Sync</title>
+<title>Workshops Evaluation V5.9.1 - XLSX Fallback + Master Snapshot + Event Queue Sync</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* XLSX resilient loader: keeps Google Sheet central sync unchanged while trying multiple trusted CDNs. */
+(function(){
+  var sources=[
+    "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+    "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+    "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+  ];
+  for(var i=0;i<sources.length;i++){
+    document.write('<script src="'+sources[i]+'"><\/script>');
+  }
+})();
+</script>
 <style>
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -247,7 +260,7 @@ tr:hover td{background:#F8FAFD}
 <div class="app">
 <div class="topbar">
   <div>
-    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.9</span></div>
+    <div class="tt"><i class="ti ti-broadcast"></i> الفريق التنفيذي للتحول الرقمي – وزارة النقل والاتصالات وتقنية المعلومات - منصة التقييم المركزية للدورات وورش العمل 2026 <span style="font-size:11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 8px;margin-right:8px">V5.9.1</span></div>
     <div class="ts">اختبار المتدرب قبل وبعد الدورة وتقييم الدورة</div>
   </div>
   <div class="rtog">
